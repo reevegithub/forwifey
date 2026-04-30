@@ -3,217 +3,1099 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>ROI Monitoring</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:Inter,system-ui,sans-serif} .tab.active{background:#0b3d66;color:#fff}.modal{display:none}.modal.show{display:flex} th{white-space:nowrap}.pill{border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800}
+    body {
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .tab.active {
+      background: #0b3d66;
+      color: #fff;
+      border-color: #0b3d66;
+    }
+
+    .modal {
+      display: none;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    th {
+      white-space: nowrap;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
   </style>
 </head>
+
 <body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <!-- LOGIN -->
   <div id="login" class="fixed inset-0 z-50 bg-slate-950/95 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center">
       <div class="mx-auto w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center text-3xl mb-4">📊</div>
+
       <h1 class="text-2xl font-black">ROI Monitoring</h1>
-      <p class="text-xs text-slate-500 mb-6 font-bold uppercase tracking-widest">Business Sales, Expenses & Inventory</p>
+      <p class="text-xs text-slate-500 mb-6 font-bold uppercase tracking-widest">
+        Business Sales, Expenses & Inventory
+      </p>
+
+      <!-- IMPORTANT: Plain Google Client ID only. No <?= ?> on GitHub Pages. -->
       <div id="g_id_onload"
-     data-client_id="488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com"
-     data-callback="handleGoogleLogin"
-     data-auto_prompt="false"></div>
-      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left" data-width="280"></div>
+           data-client_id="488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com"
+           data-callback="handleGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+
+      <div class="g_id_signin"
+           data-type="standard"
+           data-size="large"
+           data-theme="outline"
+           data-text="sign_in_with"
+           data-shape="rectangular"
+           data-logo_alignment="left"
+           data-width="280">
+      </div>
+
       <p id="loginMsg" class="text-xs text-red-500 mt-4 font-bold"></p>
     </div>
   </div>
 
+  <!-- APP -->
   <div id="app" class="hidden">
     <header class="bg-white border-b sticky top-0 z-30">
       <div class="px-5 py-4 flex items-center gap-4">
         <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl">📈</div>
+
         <div>
           <h1 class="text-xl font-black leading-none">ROI Monitoring</h1>
-          <p class="text-[10px] text-slate-400 font-bold uppercase">v<?= APP_VERSION ?> • Google Sheets Database</p>
+          <p class="text-[10px] text-slate-400 font-bold uppercase">
+            v1.0 • Google Sheets Database
+          </p>
         </div>
+
         <div class="ml-auto flex items-center gap-2">
-          <select id="businessFilter" class="border rounded-xl px-3 py-2 text-sm font-bold" onchange="renderAll()"></select>
-          <span id="userEmail" class="hidden md:inline text-xs font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-full"></span>
-          <button onclick="reloadData()" class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-black">SYNC</button>
+          <select id="businessFilter"
+                  class="border rounded-xl px-3 py-2 text-sm font-bold"
+                  onchange="renderAll()">
+          </select>
+
+          <span id="userEmail"
+                class="hidden md:inline text-xs font-bold text-slate-500 bg-slate-100 px-3 py-2 rounded-full">
+          </span>
+
+          <button onclick="reloadData()"
+                  class="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-black">
+            SYNC
+          </button>
+
+          <button onclick="openSettings()"
+                  class="bg-white border px-4 py-2 rounded-xl text-xs font-black">
+            SETTINGS
+          </button>
+
+          <button onclick="signOut()"
+                  class="bg-red-50 text-red-700 border border-red-100 px-4 py-2 rounded-xl text-xs font-black">
+            LOGOUT
+          </button>
         </div>
       </div>
+
       <nav class="px-5 pb-3 flex gap-2 overflow-x-auto">
-        <button class="tab active px-4 py-2 rounded-xl text-xs font-black" onclick="showTab('dashboard')">Dashboard</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('businesses')">Businesses</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('sales')">Sales</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('expenses')">Expenses</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('materials')">Materials</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('inventory')">Inventory</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('products')">Products</button>
-        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border" onclick="showTab('logs')">Logs</button>
+        <button class="tab active px-4 py-2 rounded-xl text-xs font-black border"
+                onclick="showTab('dashboard', this)">
+          Dashboard
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('businesses', this)">
+          Businesses
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('sales', this)">
+          Sales
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('expenses', this)">
+          Expenses
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('materials', this)">
+          Materials
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('inventory', this)">
+          Inventory
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('products', this)">
+          Products
+        </button>
+
+        <button class="tab px-4 py-2 rounded-xl text-xs font-black bg-white border"
+                onclick="showTab('logs', this)">
+          Logs
+        </button>
       </nav>
     </header>
 
     <main class="p-5 max-w-7xl mx-auto">
+
+      <!-- DASHBOARD -->
       <section id="dashboard" class="view">
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-5">
-          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-blue-500"><p class="text-xs font-black text-slate-400 uppercase">Sales</p><h2 id="kpiSales" class="text-2xl font-black">₱0</h2></div>
-          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-red-500"><p class="text-xs font-black text-slate-400 uppercase">Expenses</p><h2 id="kpiExpenses" class="text-2xl font-black">₱0</h2></div>
-          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-green-500"><p class="text-xs font-black text-slate-400 uppercase">Income</p><h2 id="kpiIncome" class="text-2xl font-black">₱0</h2></div>
-          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-violet-500"><p class="text-xs font-black text-slate-400 uppercase">Businesses</p><h2 id="kpiBusinesses" class="text-2xl font-black">0</h2></div>
-          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-amber-500"><p class="text-xs font-black text-slate-400 uppercase">Low Stock</p><h2 id="kpiLowStock" class="text-2xl font-black">0</h2></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-blue-500">
+            <p class="text-xs font-black text-slate-400 uppercase">Sales</p>
+            <h2 id="kpiSales" class="text-2xl font-black">₱0</h2>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-red-500">
+            <p class="text-xs font-black text-slate-400 uppercase">Expenses</p>
+            <h2 id="kpiExpenses" class="text-2xl font-black">₱0</h2>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-green-500">
+            <p class="text-xs font-black text-slate-400 uppercase">Income</p>
+            <h2 id="kpiIncome" class="text-2xl font-black">₱0</h2>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-violet-500">
+            <p class="text-xs font-black text-slate-400 uppercase">Businesses</p>
+            <h2 id="kpiBusinesses" class="text-2xl font-black">0</h2>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-amber-500">
+            <p class="text-xs font-black text-slate-400 uppercase">Low Stock</p>
+            <h2 id="kpiLowStock" class="text-2xl font-black">0</h2>
+          </div>
         </div>
+
         <div class="grid lg:grid-cols-2 gap-5">
-          <div class="bg-white rounded-2xl p-5 shadow-sm"><h3 class="font-black mb-4">Sales vs Expenses by Business</h3><div class="h-80"><canvas id="chartBusiness"></canvas></div></div>
-          <div class="bg-white rounded-2xl p-5 shadow-sm"><h3 class="font-black mb-4">Overall ROI</h3><div class="h-80"><canvas id="chartRoi"></canvas></div></div>
+          <div class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="font-black mb-4">Sales vs Expenses by Business</h3>
+            <div class="h-80">
+              <canvas id="chartBusiness"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl p-5 shadow-sm">
+            <h3 class="font-black mb-4">Overall ROI</h3>
+            <div class="h-80">
+              <canvas id="chartRoi"></canvas>
+            </div>
+          </div>
         </div>
       </section>
 
+      <!-- TABLE VIEW -->
       <section id="tableView" class="view hidden bg-white rounded-2xl shadow-sm overflow-hidden">
         <div class="p-4 border-b flex flex-col md:flex-row gap-3 md:items-center">
           <h2 id="tableTitle" class="font-black text-lg">Table</h2>
-          <input id="searchBox" oninput="renderCurrentTable()" placeholder="Search..." class="md:ml-auto border rounded-xl px-3 py-2 text-sm w-full md:w-80">
-          <button id="addBtn" onclick="openForm()" class="bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-black">ADD NEW</button>
+
+          <input id="searchBox"
+                 oninput="renderCurrentTable()"
+                 placeholder="Search..."
+                 class="md:ml-auto border rounded-xl px-3 py-2 text-sm w-full md:w-80">
+
+          <button id="addBtn"
+                  onclick="openForm()"
+                  class="bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-black">
+            ADD NEW
+          </button>
         </div>
-        <div class="overflow-x-auto"><table class="w-full text-sm"><thead id="thead" class="bg-slate-900 text-white text-xs uppercase"></thead><tbody id="tbody" class="divide-y"></tbody></table></div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead id="thead" class="bg-slate-900 text-white text-xs uppercase"></thead>
+            <tbody id="tbody" class="divide-y"></tbody>
+          </table>
+        </div>
       </section>
     </main>
   </div>
 
+  <!-- SETTINGS MODAL -->
+  <div id="settingsModal" class="modal fixed inset-0 z-[60] bg-black/60 items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="p-5 border-b flex items-center">
+        <h3 class="font-black text-xl">Connect Backend</h3>
+        <button onclick="closeSettings()" class="ml-auto text-2xl">×</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="rounded-2xl bg-blue-50 border border-blue-100 p-4">
+          <p class="text-xs text-blue-900 font-bold leading-relaxed">
+            Paste the encrypted Apps Script Web App URL. The raw <b>/exec</b> URL will not be written in this public GitHub file.
+          </p>
+        </div>
+
+        <div>
+          <label class="text-xs font-black uppercase text-slate-500">
+            Encrypted Apps Script /exec URL
+          </label>
+          <textarea id="encryptedApiUrl"
+                    rows="4"
+                    class="mt-1 w-full border rounded-xl px-3 py-2 text-xs font-mono"
+                    placeholder="Paste encrypted URL here"></textarea>
+        </div>
+
+        <div>
+          <label class="text-xs font-black uppercase text-slate-500">
+            Decryption Key
+          </label>
+          <input id="decryptKey"
+                 type="password"
+                 class="mt-1 w-full border rounded-xl px-3 py-2 text-sm"
+                 placeholder="Enter secret key">
+        </div>
+
+        <p id="settingsMsg" class="text-xs text-red-600 font-bold"></p>
+
+        <div class="flex flex-col md:flex-row gap-2 justify-end">
+          <button onclick="encryptRawUrl()"
+                  class="px-4 py-2 rounded-xl border text-xs font-black">
+            ENCRYPT URL
+          </button>
+
+          <button onclick="saveSettings()"
+                  class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black">
+            CONNECT
+          </button>
+        </div>
+
+        <div id="encryptOutputBox" class="hidden">
+          <label class="text-xs font-black uppercase text-slate-500">
+            Encrypted Output
+          </label>
+          <div id="encryptOutput"
+               class="mt-1 p-3 rounded-xl bg-slate-900 text-green-300 text-xs font-mono break-all">
+          </div>
+          <button onclick="copyEncryptedOutput()"
+                  class="mt-2 px-4 py-2 rounded-xl bg-green-700 text-white text-xs font-black">
+            COPY ENCRYPTED OUTPUT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM MODAL -->
   <div id="formModal" class="modal fixed inset-0 z-40 bg-black/50 items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-      <div class="p-5 border-b flex items-center"><h3 id="formTitle" class="font-black text-xl">Form</h3><button onclick="closeForm()" class="ml-auto text-2xl">×</button></div>
-      <form id="recordForm" class="p-5 overflow-y-auto grid md:grid-cols-2 gap-4" onsubmit="saveForm(event)"></form>
-      <div class="p-5 border-t flex gap-2 justify-end"><button onclick="closeForm()" class="px-4 py-2 rounded-xl border text-xs font-black">CANCEL</button><button onclick="document.getElementById('recordForm').requestSubmit()" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black">SAVE</button></div>
+      <div class="p-5 border-b flex items-center">
+        <h3 id="formTitle" class="font-black text-xl">Form</h3>
+        <button onclick="closeForm()" class="ml-auto text-2xl">×</button>
+      </div>
+
+      <form id="recordForm"
+            class="p-5 overflow-y-auto grid md:grid-cols-2 gap-4"
+            onsubmit="saveForm(event)">
+      </form>
+
+      <div class="p-5 border-t flex gap-2 justify-end">
+        <button onclick="closeForm()"
+                class="px-4 py-2 rounded-xl border text-xs font-black">
+          CANCEL
+        </button>
+
+        <button onclick="document.getElementById('recordForm').requestSubmit()"
+                class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-black">
+          SAVE
+        </button>
+      </div>
     </div>
   </div>
 
 <script>
-const API_URL = location.href.split('?')[0];
-let TOKEN = '', USER = null, DB = null, current = { sheet: 'businesses', id: null };
-let chartBusiness = null, chartRoi = null;
+/**
+ * SECURITY FLOW:
+ * - GitHub index.html has no raw Apps Script /exec URL.
+ * - User signs in with Google first.
+ * - After login, user pastes encrypted Apps Script URL + key.
+ * - Raw URL is decrypted only in browser memory.
+ * - Only encrypted value is saved to localStorage.
+ */
 
-const SCHEMAS = {
-  businesses: { title:'Businesses', key:'businesses', fields:[['name','Business Name','text',true],['description','Description','text',false],['status','Status','select:Active,Inactive',true]] },
-  sales: { title:'Sales', key:'sales', fields:[['business_id','Business','business',true],['sale_date','Date','date',true],['item','Item','text',true],['product_id','Product','product',false],['price','Price','number',true],['qty','Qty','number',true],['customer','Customer','text',false],['payment_status','Payment Status','select:Paid,Unpaid,In-process',true],['remarks','Remarks','text',false]] },
-  expenses: { title:'Expenses', key:'expenses', fields:[['business_id','Business','business',true],['expense_date','Date','date',true],['item','Item','text',true],['type','Type','select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other',true],['vendor','Vendor','text',false],['price','Price','number',true],['qty','Qty','number',true],['remarks','Remarks','text',false]] },
-  materials: { title:'Materials', key:'materials', fields:[['business_id','Business','business',true],['name','Material Name','text',true],['unit','Unit','text',true],['qty_on_hand','Starting Qty','number',true],['cost_per_unit','Cost per Unit','number',true],['reorder_level','Reorder Level','number',false],['status','Status','select:Active,Inactive',true]] },
-  inventory: { title:'Inventory Movements', key:'inventory', fields:[['business_id','Business','business',true],['material_id','Material','material',true],['type','Type','select:IN,OUT,WASTE',true],['qty','Qty','number',true],['unit_cost','Unit Cost','number',false],['reference','Reference','text',false],['remarks','Remarks','text',false],['movement_date','Movement Date','date',true]] },
-  products: { title:'Products', key:'products', fields:[['business_id','Business','business',true],['name','Product Name','text',true],['sku','SKU','text',false],['selling_price','Selling Price','number',true],['target_margin_percent','Target Margin %','number',false],['status','Status','select:Active,Inactive',true]] },
-  logs: { title:'Audit Logs', key:'logs', readOnly:true, fields:[] }
+let API_URL = '';
+let TOKEN = '';
+let USER = null;
+let DB = null;
+
+let current = {
+  sheet: 'businesses',
+  id: null
 };
 
-function handleGoogleLogin(response){
+let chartBusiness = null;
+let chartRoi = null;
+
+const STORAGE_ENCRYPTED_API_KEY = 'roi_encrypted_api_url';
+
+const SCHEMAS = {
+  businesses: {
+    title: 'Businesses',
+    key: 'businesses',
+    fields: [
+      ['name', 'Business Name', 'text', true],
+      ['description', 'Description', 'text', false],
+      ['status', 'Status', 'select:Active,Inactive', true]
+    ]
+  },
+
+  sales: {
+    title: 'Sales',
+    key: 'sales',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['sale_date', 'Date', 'date', true],
+      ['item', 'Item', 'text', true],
+      ['product_id', 'Product', 'product', false],
+      ['price', 'Price', 'number', true],
+      ['qty', 'Qty', 'number', true],
+      ['customer', 'Customer', 'text', false],
+      ['payment_status', 'Payment Status', 'select:Paid,Unpaid,In-process', true],
+      ['remarks', 'Remarks', 'text', false]
+    ]
+  },
+
+  expenses: {
+    title: 'Expenses',
+    key: 'expenses',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['expense_date', 'Date', 'date', true],
+      ['item', 'Item', 'text', true],
+      ['type', 'Type', 'select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other', true],
+      ['vendor', 'Vendor', 'text', false],
+      ['price', 'Price', 'number', true],
+      ['qty', 'Qty', 'number', true],
+      ['remarks', 'Remarks', 'text', false]
+    ]
+  },
+
+  materials: {
+    title: 'Materials',
+    key: 'materials',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['name', 'Material Name', 'text', true],
+      ['unit', 'Unit', 'text', true],
+      ['qty_on_hand', 'Starting Qty', 'number', true],
+      ['cost_per_unit', 'Cost per Unit', 'number', true],
+      ['reorder_level', 'Reorder Level', 'number', false],
+      ['status', 'Status', 'select:Active,Inactive', true]
+    ]
+  },
+
+  inventory: {
+    title: 'Inventory Movements',
+    key: 'inventory',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['material_id', 'Material', 'material', true],
+      ['type', 'Type', 'select:IN,OUT,WASTE', true],
+      ['qty', 'Qty', 'number', true],
+      ['unit_cost', 'Unit Cost', 'number', false],
+      ['reference', 'Reference', 'text', false],
+      ['remarks', 'Remarks', 'text', false],
+      ['movement_date', 'Movement Date', 'date', true]
+    ]
+  },
+
+  products: {
+    title: 'Products',
+    key: 'products',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['name', 'Product Name', 'text', true],
+      ['sku', 'SKU', 'text', false],
+      ['selling_price', 'Selling Price', 'number', true],
+      ['target_margin_percent', 'Target Margin %', 'number', false],
+      ['status', 'Status', 'select:Active,Inactive', true]
+    ]
+  },
+
+  logs: {
+    title: 'Audit Logs',
+    key: 'logs',
+    readOnly: true,
+    fields: []
+  }
+};
+
+function handleGoogleLogin(response) {
   TOKEN = response.credential;
-  post({action:'verifyToken', token:TOKEN}).then(res=>{
-    if(res.status !== 'success') throw new Error(res.message || 'Login failed');
-    USER = res.user;
-    document.getElementById('login').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('userEmail').innerText = USER.email;
-    reloadData();
-  }).catch(err=> document.getElementById('loginMsg').innerText = err.message);
+
+  document.getElementById('loginMsg').innerText = '';
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  const savedEncrypted = localStorage.getItem(STORAGE_ENCRYPTED_API_KEY) || '';
+  document.getElementById('encryptedApiUrl').value = savedEncrypted;
+
+  openSettings();
 }
 
-async function post(payload){
-  const r = await fetch(API_URL, {method:'POST', body:JSON.stringify(payload)});
-  return await r.json();
+function signOut() {
+  TOKEN = '';
+  USER = null;
+  DB = null;
+  API_URL = '';
+
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+  document.getElementById('userEmail').innerText = '';
+
+  if (window.google && google.accounts && google.accounts.id) {
+    google.accounts.id.disableAutoSelect();
+  }
 }
 
-async function reloadData(){
-  const res = await post({action:'getBootstrap', token:TOKEN});
-  if(res.status !== 'success') return alert(res.message || 'Failed to load data');
-  DB = res.data;
-  fillBusinessFilter();
-  renderAll();
+function openSettings() {
+  document.getElementById('settingsMsg').innerText = '';
+  document.getElementById('settingsModal').classList.add('show');
 }
 
-function fillBusinessFilter(){
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('show');
+}
+
+function encryptRawUrl() {
+  const raw = prompt('Paste your raw Apps Script Web App /exec URL:');
+  if (!raw) return;
+
+  const key = document.getElementById('decryptKey').value.trim();
+
+  if (!key) {
+    alert('Enter a decryption key first.');
+    return;
+  }
+
+  if (!isValidAppsScriptExecUrl(raw)) {
+    alert('Invalid Apps Script Web App URL. It must start with https://script.google.com/macros/s/ and end with /exec');
+    return;
+  }
+
+  const encrypted = CryptoJS.AES.encrypt(raw, key).toString();
+
+  document.getElementById('encryptOutputBox').classList.remove('hidden');
+  document.getElementById('encryptOutput').innerText = encrypted;
+  document.getElementById('encryptedApiUrl').value = encrypted;
+}
+
+function copyEncryptedOutput() {
+  const text = document.getElementById('encryptOutput').innerText.trim();
+  if (!text) return;
+
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Encrypted URL copied.');
+  });
+}
+
+function decryptUrl(encrypted, key) {
+  try {
+    const bytes = CryptoJS.AES.decrypt(encrypted, key);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (e) {
+    return '';
+  }
+}
+
+function isValidAppsScriptExecUrl(url) {
+  return String(url || '').startsWith('https://script.google.com/macros/s/') &&
+         String(url || '').endsWith('/exec');
+}
+
+async function saveSettings() {
+  const encrypted = document.getElementById('encryptedApiUrl').value.trim();
+  const key = document.getElementById('decryptKey').value.trim();
+  const msg = document.getElementById('settingsMsg');
+
+  msg.innerText = '';
+
+  if (!TOKEN) {
+    msg.innerText = 'Please sign in with Google first.';
+    return;
+  }
+
+  if (!encrypted || !key) {
+    msg.innerText = 'Encrypted URL and decryption key are required.';
+    return;
+  }
+
+  const decrypted = decryptUrl(encrypted, key);
+
+  if (!decrypted || !isValidAppsScriptExecUrl(decrypted)) {
+    msg.innerText = 'Invalid encrypted URL or wrong decryption key.';
+    return;
+  }
+
+  API_URL = decrypted;
+
+  try {
+    const res = await post({
+      action: 'verifyToken',
+      token: TOKEN
+    });
+
+    if (res.status !== 'success') {
+      msg.innerText = res.message || 'Google verification failed.';
+      API_URL = '';
+      return;
+    }
+
+    USER = res.user || {
+      email: res.email || '',
+      name: res.name || ''
+    };
+
+    localStorage.setItem(STORAGE_ENCRYPTED_API_KEY, encrypted);
+
+    document.getElementById('userEmail').innerText = USER.email || '';
+    closeSettings();
+
+    await reloadData();
+  } catch (err) {
+    msg.innerText = err.message;
+    API_URL = '';
+  }
+}
+
+async function post(payload) {
+  if (!API_URL) {
+    throw new Error('Backend is not connected. Please enter the encrypted Apps Script URL.');
+  }
+
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+  const text = await r.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('Backend returned non-JSON:', text);
+    throw new Error('Backend did not return JSON. Check encrypted Apps Script URL, /exec deployment, and access setting.');
+  }
+}
+
+async function reloadData() {
+  if (!API_URL) {
+    openSettings();
+    return;
+  }
+
+  try {
+    const res = await post({
+      action: 'getBootstrap',
+      token: TOKEN
+    });
+
+    if (res.status !== 'success') {
+      alert(res.message || 'Failed to load data');
+      return;
+    }
+
+    DB = res.data || {
+      businesses: [],
+      sales: [],
+      expenses: [],
+      materials: [],
+      inventory: [],
+      products: [],
+      logs: []
+    };
+
+    fillBusinessFilter();
+    renderAll();
+  } catch (err) {
+    alert(err.message);
+    openSettings();
+  }
+}
+
+function fillBusinessFilter() {
   const sel = document.getElementById('businessFilter');
   const old = sel.value || 'ALL';
-  sel.innerHTML = '<option value="ALL">All Businesses</option>' + DB.businesses.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-  sel.value = [...sel.options].some(o=>o.value===old) ? old : 'ALL';
-}
-function selectedBusiness(){ return document.getElementById('businessFilter').value; }
-function frows(key){ const bid = selectedBusiness(); return (DB[key]||[]).filter(r => bid==='ALL' || !r.business_id || r.business_id===bid || r.id===bid); }
-function money(n){ return '₱' + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function num(v){ const n=Number(String(v||0).replace(/[₱,\s]/g,'')); return isFinite(n)?n:0; }
-function businessName(id){ return (DB.businesses.find(b=>b.id===id)||{}).name || '-'; }
-function materialName(id){ return (DB.materials.find(m=>m.id===id)||{}).name || '-'; }
-function productName(id){ return (DB.products.find(p=>p.id===id)||{}).name || '-'; }
 
-function renderAll(){ renderDashboard(); if(!document.getElementById('tableView').classList.contains('hidden')) renderCurrentTable(); }
-function renderDashboard(){
-  const sales = frows('sales'), expenses = frows('expenses'), materials = frows('materials'), businesses = selectedBusiness()==='ALL'?DB.businesses:DB.businesses.filter(b=>b.id===selectedBusiness());
-  const ts = sales.reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0);
-  const te = expenses.reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0);
-  document.getElementById('kpiSales').innerText = money(ts);
-  document.getElementById('kpiExpenses').innerText = money(te);
-  document.getElementById('kpiIncome').innerText = money(ts-te);
+  const businesses = DB && DB.businesses ? DB.businesses : [];
+
+  sel.innerHTML =
+    '<option value="ALL">All Businesses</option>' +
+    businesses.map(b => `<option value="${escapeAttr(b.id)}">${escapeHtml(b.name)}</option>`).join('');
+
+  sel.value = [...sel.options].some(o => o.value === old) ? old : 'ALL';
+}
+
+function selectedBusiness() {
+  return document.getElementById('businessFilter').value;
+}
+
+function frows(key) {
+  if (!DB || !DB[key]) return [];
+
+  const bid = selectedBusiness();
+
+  return DB[key].filter(r => {
+    return bid === 'ALL' ||
+           !r.business_id ||
+           r.business_id === bid ||
+           r.id === bid;
+  });
+}
+
+function money(n) {
+  return '₱' + Number(n || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function num(v) {
+  const n = Number(String(v || 0).replace(/[₱,\s]/g, ''));
+  return isFinite(n) ? n : 0;
+}
+
+function businessName(id) {
+  return ((DB.businesses || []).find(b => b.id === id) || {}).name || '-';
+}
+
+function materialName(id) {
+  return ((DB.materials || []).find(m => m.id === id) || {}).name || '-';
+}
+
+function productName(id) {
+  return ((DB.products || []).find(p => p.id === id) || {}).name || '-';
+}
+
+function renderAll() {
+  if (!DB) return;
+
+  renderDashboard();
+
+  if (!document.getElementById('tableView').classList.contains('hidden')) {
+    renderCurrentTable();
+  }
+}
+
+function renderDashboard() {
+  if (!DB) return;
+
+  const sales = frows('sales');
+  const expenses = frows('expenses');
+  const materials = frows('materials');
+
+  const businesses = selectedBusiness() === 'ALL'
+    ? (DB.businesses || [])
+    : (DB.businesses || []).filter(b => b.id === selectedBusiness());
+
+  const totalSales = sales.reduce((a, r) => {
+    return a + (num(r.total_price) || num(r.price) * num(r.qty || 1));
+  }, 0);
+
+  const totalExpenses = expenses.reduce((a, r) => {
+    return a + (num(r.total_cost) || num(r.price) * num(r.qty || 1));
+  }, 0);
+
+  const income = totalSales - totalExpenses;
+
+  document.getElementById('kpiSales').innerText = money(totalSales);
+  document.getElementById('kpiExpenses').innerText = money(totalExpenses);
+  document.getElementById('kpiIncome').innerText = money(income);
   document.getElementById('kpiBusinesses').innerText = businesses.length;
-  document.getElementById('kpiLowStock').innerText = materials.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).length;
+  document.getElementById('kpiLowStock').innerText =
+    materials.filter(m => num(m.qty_on_hand) <= num(m.reorder_level)).length;
 
-  const labels = businesses.map(b=>b.name);
-  const salesData = businesses.map(b=>sales.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0));
-  const expenseData = businesses.map(b=>expenses.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0));
-  if(chartBusiness) chartBusiness.destroy();
-  chartBusiness = new Chart(document.getElementById('chartBusiness'), {type:'bar', data:{labels, datasets:[{label:'Sales',data:salesData},{label:'Expenses',data:expenseData}]}, options:{responsive:true,maintainAspectRatio:false}});
-  if(chartRoi) chartRoi.destroy();
-  chartRoi = new Chart(document.getElementById('chartRoi'), {type:'doughnut', data:{labels:['Sales','Expenses','Income'], datasets:[{data:[ts,te,Math.max(ts-te,0)]}]}, options:{responsive:true,maintainAspectRatio:false}});
+  const labels = businesses.map(b => b.name);
+
+  const salesData = businesses.map(b => {
+    return sales
+      .filter(r => r.business_id === b.id)
+      .reduce((a, r) => a + (num(r.total_price) || num(r.price) * num(r.qty || 1)), 0);
+  });
+
+  const expenseData = businesses.map(b => {
+    return expenses
+      .filter(r => r.business_id === b.id)
+      .reduce((a, r) => a + (num(r.total_cost) || num(r.price) * num(r.qty || 1)), 0);
+  });
+
+  if (chartBusiness) chartBusiness.destroy();
+
+  chartBusiness = new Chart(document.getElementById('chartBusiness'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Sales', data: salesData },
+        { label: 'Expenses', data: expenseData }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
+
+  if (chartRoi) chartRoi.destroy();
+
+  chartRoi = new Chart(document.getElementById('chartRoi'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Sales', 'Expenses', 'Income'],
+      datasets: [
+        {
+          data: [
+            totalSales,
+            totalExpenses,
+            Math.max(income, 0)
+          ]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
 }
 
-function showTab(name){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  if(name==='dashboard') { document.getElementById('dashboard').classList.remove('hidden'); document.getElementById('tableView').classList.add('hidden'); return; }
-  document.getElementById('dashboard').classList.add('hidden'); document.getElementById('tableView').classList.remove('hidden'); current.sheet = name; renderCurrentTable();
+function showTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  if (name === 'dashboard') {
+    document.getElementById('dashboard').classList.remove('hidden');
+    document.getElementById('tableView').classList.add('hidden');
+    return;
+  }
+
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('tableView').classList.remove('hidden');
+
+  current.sheet = name;
+  renderCurrentTable();
 }
 
-function renderCurrentTable(){
+function renderCurrentTable() {
+  if (!DB) return;
+
   const schema = SCHEMAS[current.sheet];
+
   document.getElementById('tableTitle').innerText = schema.title;
   document.getElementById('addBtn').classList.toggle('hidden', !!schema.readOnly);
-  const rows = current.sheet==='logs' ? (DB.logs || []) : frows(schema.key);
-  const q = document.getElementById('searchBox').value.toLowerCase();
-  const filtered = rows.filter(r=>!q || JSON.stringify(r).toLowerCase().includes(q));
-  const headers = Object.keys(filtered[0] || sampleHeaders(schema.key));
-  document.getElementById('thead').innerHTML = '<tr>' + headers.map(h=>`<th class="px-4 py-3 text-left">${h}</th>`).join('') + (!schema.readOnly?'<th class="px-4 py-3 text-right">Actions</th>':'') + '</tr>';
-  document.getElementById('tbody').innerHTML = filtered.map(r=>`<tr class="hover:bg-slate-50">${headers.map(h=>`<td class="px-4 py-3">${formatCell(h,r[h])}</td>`).join('')}${!schema.readOnly?`<td class="px-4 py-3 text-right whitespace-nowrap"><button class="text-blue-700 font-black text-xs mr-3" onclick='openForm(${JSON.stringify(r).replace(/'/g,"&#39;")})'>EDIT</button><button class="text-red-700 font-black text-xs" onclick="deleteRecord('${r.id}')">DELETE</button></td>`:''}</tr>`).join('') || `<tr><td class="p-8 text-center text-slate-400" colspan="99">No records yet.</td></tr>`;
-}
-function sampleHeaders(key){ return {businesses:{name:'',status:''},sales:{sale_date:'',item:'',price:'',qty:'',total_price:''},expenses:{expense_date:'',item:'',type:'',total_cost:''},materials:{name:'',qty_on_hand:'',cost_per_unit:''},inventory:{movement_date:'',material_id:'',type:'',qty:''},products:{name:'',selling_price:''},logs:{timestamp:'',email:'',action:'',detail:''}}[key]||{}; }
-function formatCell(h,v){ if(h.includes('business_id')) return escapeHtml(businessName(v)); if(h==='material_id') return escapeHtml(materialName(v)); if(h==='product_id') return escapeHtml(productName(v)); if(['price','total_price','total_cost','cost_per_unit','unit_cost','selling_price'].includes(h)) return money(v); if(h==='status' || h==='payment_status' || h==='type') return `<span class="pill bg-slate-100">${escapeHtml(v||'-')}</span>`; return escapeHtml(v||''); }
 
-function openForm(row=null){
-  const schema = SCHEMAS[current.sheet]; current.id = row && row.id ? row.id : null;
-  document.getElementById('formTitle').innerText = (current.id?'Edit ':'Add ') + schema.title;
+  const rows = current.sheet === 'logs'
+    ? (DB.logs || [])
+    : frows(schema.key);
+
+  const q = document.getElementById('searchBox').value.toLowerCase();
+
+  const filtered = rows.filter(r => {
+    return !q || JSON.stringify(r).toLowerCase().includes(q);
+  });
+
+  const headers = Object.keys(filtered[0] || sampleHeaders(schema.key));
+
+  document.getElementById('thead').innerHTML =
+    '<tr>' +
+    headers.map(h => `<th class="px-4 py-3 text-left">${escapeHtml(h)}</th>`).join('') +
+    (!schema.readOnly ? '<th class="px-4 py-3 text-right">Actions</th>' : '') +
+    '</tr>';
+
+  document.getElementById('tbody').innerHTML =
+    filtered.map(r => {
+      const encodedRow = escapeAttr(JSON.stringify(r));
+
+      return `
+        <tr class="hover:bg-slate-50">
+          ${headers.map(h => `<td class="px-4 py-3">${formatCell(h, r[h])}</td>`).join('')}
+          ${
+            !schema.readOnly
+              ? `
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <button class="text-blue-700 font-black text-xs mr-3"
+                          onclick="openFormFromJson('${encodedRow}')">
+                    EDIT
+                  </button>
+                  <button class="text-red-700 font-black text-xs"
+                          onclick="deleteRecord('${escapeAttr(r.id)}')">
+                    DELETE
+                  </button>
+                </td>
+              `
+              : ''
+          }
+        </tr>
+      `;
+    }).join('') ||
+    `<tr><td class="p-8 text-center text-slate-400" colspan="99">No records yet.</td></tr>`;
+}
+
+function openFormFromJson(json) {
+  try {
+    openForm(JSON.parse(unescapeHtml(json)));
+  } catch (e) {
+    alert('Unable to open record.');
+  }
+}
+
+function sampleHeaders(key) {
+  return {
+    businesses: {
+      name: '',
+      status: ''
+    },
+
+    sales: {
+      sale_date: '',
+      item: '',
+      price: '',
+      qty: '',
+      total_price: ''
+    },
+
+    expenses: {
+      expense_date: '',
+      item: '',
+      type: '',
+      total_cost: ''
+    },
+
+    materials: {
+      name: '',
+      qty_on_hand: '',
+      cost_per_unit: ''
+    },
+
+    inventory: {
+      movement_date: '',
+      material_id: '',
+      type: '',
+      qty: ''
+    },
+
+    products: {
+      name: '',
+      selling_price: ''
+    },
+
+    logs: {
+      timestamp: '',
+      email: '',
+      action: '',
+      detail: ''
+    }
+  }[key] || {};
+}
+
+function formatCell(h, v) {
+  if (h.includes('business_id')) return escapeHtml(businessName(v));
+  if (h === 'material_id') return escapeHtml(materialName(v));
+  if (h === 'product_id') return escapeHtml(productName(v));
+
+  if ([
+    'price',
+    'total_price',
+    'total_cost',
+    'cost_per_unit',
+    'unit_cost',
+    'selling_price'
+  ].includes(h)) {
+    return money(v);
+  }
+
+  if (h === 'status' || h === 'payment_status' || h === 'type') {
+    return `<span class="pill bg-slate-100">${escapeHtml(v || '-')}</span>`;
+  }
+
+  return escapeHtml(v || '');
+}
+
+function openForm(row = null) {
+  const schema = SCHEMAS[current.sheet];
+
+  current.id = row && row.id ? row.id : null;
+
+  document.getElementById('formTitle').innerText =
+    (current.id ? 'Edit ' : 'Add ') + schema.title;
+
   const form = document.getElementById('recordForm');
-  form.innerHTML = schema.fields.map(([key,label,type,req]) => fieldHtml(key,label,type,req,row||{})).join('');
+
+  form.innerHTML = schema.fields
+    .map(([key, label, type, req]) => fieldHtml(key, label, type, req, row || {}))
+    .join('');
+
   document.getElementById('formModal').classList.add('show');
 }
-function closeForm(){ document.getElementById('formModal').classList.remove('show'); }
-function fieldHtml(key,label,type,req,row){
-  const val = row[key] || '';
-  if(type==='business') return selectField(key,label,DB.businesses,'name',val,req);
-  if(type==='material') return selectField(key,label,DB.materials,'name',val,req);
-  if(type==='product') return selectField(key,label,DB.products,'name',val,req,true);
-  if(type.startsWith('select:')) return `<label class="text-xs font-black uppercase text-slate-500">${label}<select name="${key}" ${req?'required':''} class="mt-1 w-full border rounded-xl px-3 py-2 text-sm">${type.split(':')[1].split(',').map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select></label>`;
-  return `<label class="text-xs font-black uppercase text-slate-500">${label}<input name="${key}" type="${type}" value="${escapeHtml(val)}" ${req?'required':''} class="mt-1 w-full border rounded-xl px-3 py-2 text-sm"></label>`;
+
+function closeForm() {
+  document.getElementById('formModal').classList.remove('show');
 }
-function selectField(key,label,rows,display,val,req,allowBlank=false){ return `<label class="text-xs font-black uppercase text-slate-500">${label}<select name="${key}" ${req?'required':''} class="mt-1 w-full border rounded-xl px-3 py-2 text-sm">${allowBlank?'<option value="">—</option>':''}${rows.map(r=>`<option value="${r.id}" ${r.id===val?'selected':''}>${escapeHtml(r[display])}</option>`).join('')}</select></label>`; }
-async function saveForm(e){
+
+function fieldHtml(key, label, type, req, row) {
+  const val = row[key] || '';
+
+  if (type === 'business') {
+    return selectField(key, label, DB.businesses || [], 'name', val, req);
+  }
+
+  if (type === 'material') {
+    return selectField(key, label, DB.materials || [], 'name', val, req);
+  }
+
+  if (type === 'product') {
+    return selectField(key, label, DB.products || [], 'name', val, req, true);
+  }
+
+  if (type.startsWith('select:')) {
+    return `
+      <label class="text-xs font-black uppercase text-slate-500">
+        ${escapeHtml(label)}
+        <select name="${escapeAttr(key)}"
+                ${req ? 'required' : ''}
+                class="mt-1 w-full border rounded-xl px-3 py-2 text-sm">
+          ${
+            type.split(':')[1]
+              .split(',')
+              .map(o => `<option value="${escapeAttr(o)}" ${o === val ? 'selected' : ''}>${escapeHtml(o)}</option>`)
+              .join('')
+          }
+        </select>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="text-xs font-black uppercase text-slate-500">
+      ${escapeHtml(label)}
+      <input name="${escapeAttr(key)}"
+             type="${escapeAttr(type)}"
+             value="${escapeAttr(val)}"
+             ${req ? 'required' : ''}
+             class="mt-1 w-full border rounded-xl px-3 py-2 text-sm">
+    </label>
+  `;
+}
+
+function selectField(key, label, rows, display, val, req, allowBlank = false) {
+  return `
+    <label class="text-xs font-black uppercase text-slate-500">
+      ${escapeHtml(label)}
+      <select name="${escapeAttr(key)}"
+              ${req ? 'required' : ''}
+              class="mt-1 w-full border rounded-xl px-3 py-2 text-sm">
+        ${allowBlank ? '<option value="">—</option>' : ''}
+        ${
+          rows.map(r => `
+            <option value="${escapeAttr(r.id)}" ${r.id === val ? 'selected' : ''}>
+              ${escapeHtml(r[display])}
+            </option>
+          `).join('')
+        }
+      </select>
+    </label>
+  `;
+}
+
+async function saveForm(e) {
   e.preventDefault();
+
   const record = Object.fromEntries(new FormData(e.target).entries());
   const action = current.id ? 'updateRecord' : 'createRecord';
-  const res = await post({action, token:TOKEN, sheet:current.sheet, id:current.id, record});
-  if(res.status !== 'success') return alert(res.message || 'Save failed');
-  closeForm(); await reloadData(); if(current.sheet) renderCurrentTable();
+
+  try {
+    const res = await post({
+      action,
+      token: TOKEN,
+      sheet: current.sheet,
+      id: current.id,
+      record
+    });
+
+    if (res.status !== 'success') {
+      alert(res.message || 'Save failed');
+      return;
+    }
+
+    closeForm();
+    await reloadData();
+
+    if (current.sheet) {
+      renderCurrentTable();
+    }
+  } catch (err) {
+    alert(err.message);
+  }
 }
-async function deleteRecord(id){
-  if(!confirm('Delete this record? This will be logged.')) return;
-  const res = await post({action:'deleteRecord', token:TOKEN, sheet:current.sheet, id});
-  if(res.status !== 'success') return alert(res.message || 'Delete failed');
-  await reloadData(); renderCurrentTable();
+
+async function deleteRecord(id) {
+  if (!confirm('Delete this record? This will be logged.')) return;
+
+  try {
+    const res = await post({
+      action: 'deleteRecord',
+      token: TOKEN,
+      sheet: current.sheet,
+      id
+    });
+
+    if (res.status !== 'success') {
+      alert(res.message || 'Delete failed');
+      return;
+    }
+
+    await reloadData();
+    renderCurrentTable();
+  } catch (err) {
+    alert(err.message);
+  }
 }
-function escapeHtml(s){ return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>'"]/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[c]));
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s);
+}
+
+function unescapeHtml(s) {
+  const txt = document.createElement('textarea');
+  txt.innerHTML = s;
+  return txt.value;
+}
 </script>
+
 </body>
 </html>
