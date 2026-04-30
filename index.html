@@ -2,190 +2,2264 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Lee Business</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
-    :root{--brand:#0f766e;--ink:#172033;--muted:#64748b;--line:#e2e8f0;--soft:#f8fafc}
-    *{box-sizing:border-box} body{font-family:Inter,system-ui,sans-serif;background:#f3f7fb;color:var(--ink)}
-    .glass{background:rgba(255,255,255,.82);backdrop-filter:blur(18px);border:1px solid rgba(226,232,240,.85);box-shadow:0 18px 60px rgba(15,23,42,.08)}
-    .nav-item{display:flex;align-items:center;gap:.8rem;width:100%;padding:.85rem 1rem;border-radius:1.1rem;font-weight:850;color:#334155;transition:.18s}
-    .nav-item:hover{background:#eef6f4}.nav-item.active{background:linear-gradient(135deg,#064e3b,#0f766e);color:white;box-shadow:0 16px 34px rgba(15,118,110,.25)}
-    .modal{display:none}.modal.show{display:flex}.thin-scroll::-webkit-scrollbar{width:9px;height:9px}.thin-scroll::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
-    .chip{border:1px solid var(--line);background:white;border-radius:999px;padding:.65rem .9rem;font-size:.78rem;font-weight:850;box-shadow:0 6px 16px rgba(15,23,42,.04)}
-    .profile-chip{display:flex;align-items:center;gap:.75rem;border:1px solid #dbeafe;background:white;border-radius:999px;padding:.35rem .75rem .35rem .35rem;box-shadow:0 12px 28px rgba(15,23,42,.08);cursor:pointer;transition:.18s}.profile-chip:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(15,23,42,.12)}
-    .avatar{width:42px;height:42px;border-radius:999px;display:grid;place-items:center;font-weight:900;color:white;background:linear-gradient(135deg,#0f766e,#3b82f6);position:relative;overflow:hidden;flex:0 0 auto}.avatar img{width:100%;height:100%;object-fit:cover}.online-dot{position:absolute;right:1px;bottom:1px;width:12px;height:12px;border-radius:99px;background:#22c55e;border:2px solid white;box-shadow:0 0 0 4px rgba(34,197,94,.16)}
-    .btn{border-radius:1rem;padding:.75rem 1rem;font-size:.78rem;font-weight:900;transition:.18s}.btn:hover{transform:translateY(-1px)}.btn-dark{background:#0f172a;color:white}.btn-green{background:#16a34a;color:white}.btn-soft{background:white;border:1px solid var(--line);color:#172033}
-    .kpi{border-radius:1.55rem;background:white;border:1px solid var(--line);padding:1.2rem;box-shadow:0 16px 44px rgba(15,23,42,.06)}
-    .table-wrap table{min-width:1100px}.lb-input{border:1px solid var(--line);border-radius:1rem;padding:.75rem .9rem;background:white;width:100%;outline:none}.lb-input:focus{box-shadow:0 0 0 4px rgba(15,118,110,.12);border-color:#0f766e}
-    .bottom-nav{display:none}@media(max-width:900px){.sidebar{display:none}.content{margin-left:0}.top-title-sub{display:none}.desktop-actions{display:none}.bottom-nav{display:grid}.main-pad{padding-bottom:6.5rem}.table-wrap{border-radius:1.25rem}.profile-name{display:none}.hide-sm{display:none}.kpi{padding:1rem}.chart-grid{grid-template-columns:1fr!important}}
+    :root {
+      --navy: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --green: #16a34a;
+      --blue: #2563eb;
+      --red: #ef4444;
+      --amber: #f59e0b;
+      --violet: #8b5cf6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(16,185,129,.10), transparent 34%),
+        radial-gradient(circle at top right, rgba(37,99,235,.10), transparent 32%),
+        #f8fafc;
+      color: #0f172a;
+    }
+
+    .app-shell { min-height: 100dvh; display: flex; }
+    .hidden { display: none !important; }
+
+    .sidebar {
+      width: 280px;
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 30;
+    }
+
+    .main {
+      margin-left: 280px;
+      width: calc(100% - 280px);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      padding: 28px 24px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #16a34a, #2563eb);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 900;
+      box-shadow: 0 18px 40px rgba(37,99,235,.18);
+    }
+
+    .brand-title { font-size: 21px; font-weight: 900; line-height: 1; }
+    .brand-sub { font-size: 11px; font-weight: 900; letter-spacing: .18em; color: #94a3b8; margin-top: 6px; }
+
+    .nav {
+      padding: 20px 14px;
+      overflow: auto;
+      flex: 1;
+    }
+
+    .nav-btn {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #1e293b;
+      padding: 15px 18px;
+      border-radius: 16px;
+      font-weight: 900;
+      font-size: 15px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .nav-btn:hover { background: #f1f5f9; }
+    .nav-btn.active {
+      background: linear-gradient(135deg, #064e3b, #047857);
+      color: #fff;
+      box-shadow: 0 18px 36px rgba(5,150,105,.18);
+    }
+
+    .side-footer {
+      padding: 14px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+
+    .side-action {
+      border: 0;
+      border-radius: 16px;
+      padding: 13px 15px;
+      font-weight: 900;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .side-action.settings { background: #f1f5f9; color: #1e293b; }
+    .side-action.logout { background: #fef2f2; color: #b91c1c; }
+
+    .topbar {
+      min-height: 86px;
+      background: rgba(255,255,255,.90);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .top-title { flex: 1; min-width: 0; }
+    .top-title h1 { margin: 0; font-size: 32px; font-weight: 900; letter-spacing: -.04em; }
+    .top-title p { margin: 5px 0 0; color: #64748b; font-size: 13px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .select, .input {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 18px;
+      padding: 13px 16px;
+      font-weight: 800;
+      color: #0f172a;
+      outline: none;
+      min-height: 46px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #0f172a;
+      border-radius: 18px;
+      padding: 13px 18px;
+      font-weight: 900;
+      min-height: 46px;
+      cursor: pointer;
+      box-shadow: 0 10px 22px rgba(15,23,42,.04);
+    }
+
+    .btn:hover { background: #f8fafc; }
+    .btn.dark { background: #020617; color: #fff; border-color: #020617; }
+    .btn.green { background: #16a34a; color: #fff; border-color: #16a34a; }
+    .btn.blue { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn.red { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .btn.sm { padding: 9px 12px; min-height: 36px; border-radius: 13px; font-size: 12px; }
+
+    .status-pill {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      min-height: 46px;
+      padding: 0 15px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #64748b;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+
+    .status-pill.online .status-dot {
+      background: #22c55e;
+      box-shadow: 0 0 0 5px rgba(34,197,94,.13);
+    }
+
+    .profile-chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 7px 14px 7px 7px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      cursor: pointer;
+      min-height: 54px;
+      box-shadow: 0 12px 26px rgba(15,23,42,.06);
+      max-width: 245px;
+    }
+
+    .profile-chip:hover { border-color: #2563eb; transform: translateY(-1px); }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #16a34a, #2563eb);
+      color: #fff;
+      font-weight: 900;
+      flex: 0 0 auto;
+      position: relative;
+    }
+
+    .avatar img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .avatar.has-img img { display: block; }
+    .avatar.has-img span { display: none; }
+
+    .avatar::after {
+      content: '';
+      position: absolute;
+      right: 1px;
+      bottom: 1px;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      border: 2px solid #fff;
+    }
+
+    .profile-meta { min-width: 0; text-align: left; }
+    .profile-name { font-size: 14px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 145px; }
+    .profile-label { font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: .15em; text-transform: uppercase; margin-top: 2px; }
+
+    .content {
+      padding: 28px;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .kpi-card {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 18px 42px rgba(15,23,42,.06);
+      min-height: 140px;
+      border-top: 3px solid #2563eb;
+    }
+
+    .kpi-card.red { border-top-color: #ef4444; }
+    .kpi-card.green { border-top-color: #10b981; }
+    .kpi-card.violet { border-top-color: #8b5cf6; }
+    .kpi-card.amber { border-top-color: #f59e0b; }
+
+    .kpi-label { color: #94a3b8; font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+    .kpi-value { font-size: 32px; font-weight: 900; margin-top: 18px; letter-spacing: -.03em; }
+    .kpi-sub { color: #64748b; margin-top: 8px; font-weight: 600; }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 18px 42px rgba(15,23,42,.06);
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -.03em; }
+    .panel-sub { margin: 5px 0 0; color: #64748b; font-weight: 600; }
+    .chart-box { height: 330px; }
+
+    .table-shell {
+      background: rgba(255,255,255,.94);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 18px 42px rgba(15,23,42,.06);
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      padding: 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .table-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin-right: auto;
+    }
+
+    .table-wrap { overflow: auto; max-height: calc(100dvh - 255px); }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; }
+    th {
+      background: #0f172a;
+      color: #fff;
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    tr:hover td { background: #f8fafc; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 900;
+      background: #f1f5f9;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .id-short { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 900; color: #2563eb; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.62);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 80;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-card {
+      width: min(780px, 100%);
+      max-height: 92dvh;
+      overflow: hidden;
+      background: #fff;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      box-shadow: 0 35px 90px rgba(15,23,42,.28);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-head {
+      padding: 22px 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .modal-title { font-size: 22px; font-weight: 900; margin: 0; }
+    .modal-body { padding: 24px; overflow: auto; }
+    .modal-foot {
+      padding: 18px 24px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 16px;
+    }
+
+    .form-field label {
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight: 700;
+      outline: none;
+      min-height: 46px;
+      background: #fff;
+    }
+
+    .form-field textarea { min-height: 90px; resize: vertical; }
+    .span-2 { grid-column: span 2; }
+
+    .login-screen {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(16,185,129,.18), transparent 28%),
+        radial-gradient(circle at 80% 20%, rgba(37,99,235,.16), transparent 25%),
+        #f8fafc;
+    }
+
+    .login-card {
+      width: min(440px, 100%);
+      background: rgba(255,255,255,.94);
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      padding: 34px;
+      box-shadow: 0 28px 80px rgba(15,23,42,.16);
+      text-align: center;
+    }
+
+    .login-logo {
+      width: 76px;
+      height: 76px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #16a34a, #2563eb);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      font-weight: 900;
+      margin: 0 auto 18px;
+    }
+
+    .login-title { font-size: 30px; font-weight: 900; margin: 0; letter-spacing: -.04em; }
+    .login-sub { color: #64748b; margin: 8px 0 25px; font-weight: 700; }
+    .login-error { color: #dc2626; font-size: 13px; font-weight: 800; margin-top: 14px; min-height: 18px; }
+
+    .mobile-toggle { display: none; }
+
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,.94);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+      z-index: 40;
+      padding: 8px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .bottom-nav button {
+      border: 0;
+      background: transparent;
+      border-radius: 14px;
+      padding: 8px 4px;
+      font-weight: 900;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    .bottom-nav button.active {
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,.46);
+      backdrop-filter: blur(5px);
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 22px;
+    }
+
+    .loading.show { display: grid; }
+
+    .loading-card {
+      width: min(340px, 100%);
+      background: #fff;
+      border-radius: 28px;
+      padding: 28px;
+      text-align: center;
+      box-shadow: 0 28px 80px rgba(15,23,42,.24);
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border-radius: 999px;
+      border: 5px solid #dbeafe;
+      border-top-color: #2563eb;
+      margin: 0 auto 16px;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-wrap {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 150;
+      display: grid;
+      gap: 10px;
+    }
+
+    .toast {
+      background: #0f172a;
+      color: #fff;
+      border-radius: 18px;
+      padding: 14px 16px;
+      font-weight: 800;
+      box-shadow: 0 16px 40px rgba(15,23,42,.20);
+      max-width: 320px;
+    }
+
+    .toast.error { background: #dc2626; }
+    .toast.success { background: #16a34a; }
+
+    @media (max-width: 1180px) {
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .panel-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        width: 290px;
+      }
+
+      .sidebar.open { transform: translateX(0); }
+
+      .main {
+        margin-left: 0;
+        width: 100%;
+        padding-bottom: 72px;
+      }
+
+      .topbar {
+        padding: 14px 16px;
+        align-items: flex-start;
+      }
+
+      .top-title h1 { font-size: 26px; }
+      .top-title p { font-size: 11px; letter-spacing: .16em; }
+
+      .mobile-toggle {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 16px;
+        min-width: 46px;
+        height: 46px;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .top-actions {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: flex-start;
+      }
+
+      .topbar { flex-wrap: wrap; }
+      .top-title { flex: 1; }
+
+      .content { padding: 16px; }
+      .kpi-grid { grid-template-columns: 1fr; gap: 14px; }
+      .panel { padding: 18px; border-radius: 22px; }
+      .chart-box { height: 280px; }
+
+      .profile-meta { display: none; }
+      .profile-chip { padding-right: 7px; }
+
+      .bottom-nav { display: grid; }
+
+      .desktop-only { display: none !important; }
+
+      .form-grid { grid-template-columns: 1fr; }
+      .span-2 { grid-column: span 1; }
+
+      .table-toolbar { align-items: stretch; }
+      .table-title { width: 100%; }
+      .input, .select, .btn { width: 100%; }
+    }
   </style>
 </head>
-<body class="min-h-screen overflow-hidden">
-  <div id="app" class="h-screen flex overflow-hidden">
-    <aside class="sidebar w-[280px] bg-white/90 border-r border-slate-200 shrink-0 flex flex-col">
-      <div class="p-6 flex items-center gap-3 border-b border-slate-100">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-700 to-blue-500 text-white grid place-items-center font-black text-2xl shadow-lg">L</div>
-        <div><div class="font-black text-xl">Lee Business</div><div class="text-[11px] tracking-[.22em] uppercase text-slate-400 font-black">Command Center</div></div>
+
+<body>
+
+  <div id="login" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">L</div>
+      <h1 class="login-title">Lee Business</h1>
+      <p class="login-sub">Sales, expenses, inventory, and ROI analytics</p>
+      <div id="googleSignInBtn" class="flex justify-center"></div>
+      <p id="loginMsg" class="login-error"></p>
+    </div>
+  </div>
+
+  <div id="app" class="app-shell hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">L</div>
+        <div>
+          <div class="brand-title">Lee Business</div>
+          <div class="brand-sub">COMMAND CENTER</div>
+        </div>
       </div>
-      <nav class="p-4 space-y-2 flex-1 overflow-auto thin-scroll">
-        <button class="nav-item active" data-tab="dashboard" onclick="showTab('dashboard')">📊 <span>Dashboard</span></button>
-        <button class="nav-item" data-tab="businesses" onclick="showTab('businesses')">🏢 <span>Businesses</span></button>
-        <button class="nav-item" data-tab="sales" onclick="showTab('sales')">💰 <span>Sales</span></button>
-        <button class="nav-item" data-tab="expenses" onclick="showTab('expenses')">🧾 <span>Expenses</span></button>
-        <button class="nav-item" data-tab="materials" onclick="showTab('materials')">🧱 <span>Materials</span></button>
-        <button class="nav-item" data-tab="inventory" onclick="showTab('inventory')">📦 <span>Inventory</span></button>
-        <button class="nav-item" data-tab="products" onclick="showTab('products')">🛍️ <span>Products</span></button>
-        <button class="nav-item" data-tab="logs" onclick="showTab('logs')">🕘 <span>Audit Logs</span></button>
-      </nav>
-      <div class="p-4 border-t border-slate-100 space-y-2">
-        <button onclick="openSettings()" class="nav-item bg-slate-50">⚙️ <span>Backend Settings</span></button>
-        <button onclick="signOut()" class="nav-item bg-red-50 text-red-700">↪ <span>Logout</span></button>
+
+      <div class="nav">
+        <button class="nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="nav-btn" data-tab="businesses" onclick="switchTab('businesses')">🏢 Businesses</button>
+        <button class="nav-btn" data-tab="sales" onclick="switchTab('sales')">💰 Sales</button>
+        <button class="nav-btn" data-tab="expenses" onclick="switchTab('expenses')">🧾 Expenses</button>
+        <button class="nav-btn" data-tab="materials" onclick="switchTab('materials')">🧱 Materials</button>
+        <button class="nav-btn" data-tab="inventory" onclick="switchTab('inventory')">📦 Inventory</button>
+        <button class="nav-btn" data-tab="products" onclick="switchTab('products')">🛍️ Products</button>
+        <button class="nav-btn" data-tab="logs" onclick="switchTab('logs')">🕘 Audit Logs</button>
+      </div>
+
+      <div class="side-footer">
+        <button class="side-action settings" onclick="openSettings()">⚙️ Backend Settings</button>
+        <button class="side-action logout" onclick="logout()">↪ Logout</button>
       </div>
     </aside>
 
-    <main class="content flex-1 min-w-0 flex flex-col bg-[radial-gradient(circle_at_top_left,#e7fff7,transparent_33%),radial-gradient(circle_at_top_right,#e9f2ff,transparent_35%)]">
-      <header class="h-auto lg:h-[92px] bg-white/80 backdrop-blur-xl border-b border-slate-200 px-4 md:px-8 py-4 flex flex-col lg:flex-row gap-3 lg:items-center">
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-3 lg:hidden mb-2"><div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-700 to-blue-500 text-white grid place-items-center font-black">L</div><div class="font-black text-lg">Lee Business</div></div>
-          <h1 id="pageTitle" class="text-2xl md:text-3xl font-black tracking-tight">Dashboard</h1>
-          <p class="top-title-sub text-xs md:text-sm uppercase tracking-[.22em] text-slate-500 font-black">Sales, expenses, inventory, and ROI analytics</p>
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+
+        <div class="top-title">
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Sales, expenses, inventory, and ROI analytics</p>
         </div>
-        <div class="flex items-center gap-2 flex-wrap justify-end">
-          <select id="globalBusinessFilter" onchange="renderAll()" class="lb-input !rounded-full !w-auto font-bold min-w-[170px]"><option>All Businesses</option></select>
-          <span id="syncState" class="chip flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span><span>Offline</span></span>
-          <div id="onlineUsers" class="hide-sm flex items-center gap-1"></div>
-          <button id="profileChip" onclick="openProfile()" class="profile-chip" title="Open profile settings"><span id="profileAvatar" class="avatar">PR<span class="online-dot"></span></span><span class="profile-name"><b id="profileNameTop" class="block leading-tight">Profile</b><small class="font-black text-slate-400 tracking-widest uppercase">Profile</small></span></button>
-          <div class="desktop-actions flex items-center gap-2">
-            <button onclick="reloadData(true)" class="btn btn-dark">SYNC</button><button onclick="exportCsv()" class="btn btn-soft">CSV</button><button onclick="exportPdf()" class="btn btn-green">PDF</button>
+
+        <div class="top-actions">
+          <select id="businessFilter" class="select" onchange="renderAll()">
+            <option value="ALL">All Businesses</option>
+          </select>
+
+          <div id="statusPill" class="status-pill">
+            <span class="status-dot"></span>
+            <span id="statusText">Offline</span>
           </div>
+
+          <button type="button" class="profile-chip" onclick="openProfile()">
+            <div id="profileAvatar" class="avatar">
+              <img id="profileImg" alt="Profile">
+              <span id="profileInitials">PR</span>
+            </div>
+            <div class="profile-meta">
+              <div id="profileName" class="profile-name">Profile</div>
+              <div class="profile-label">Profile</div>
+            </div>
+          </button>
+
+          <button class="btn dark desktop-only" onclick="reloadData()">SYNC</button>
+          <button class="btn desktop-only" onclick="exportCsv()">CSV</button>
+          <button class="btn green desktop-only" onclick="exportPdf()">PDF</button>
         </div>
       </header>
 
-      <section class="main-pad flex-1 overflow-auto thin-scroll p-4 md:p-8">
-        <div id="cachedBanner" class="hidden mb-4 glass rounded-2xl p-4 text-sm font-bold text-slate-600">Showing cached data. Sign in and sync to update live records.</div>
-        <div id="connectionPanel" class="hidden mb-6 glass rounded-3xl p-6 md:p-8 border-emerald-200">
-          <div class="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between"><div><h2 class="text-2xl font-black">Connect Lee Business Backend</h2><p class="text-slate-500 mt-1">Enter your single Connection Key once. It will be cached and will not pop up again on refresh.</p></div><button onclick="openSettings()" class="btn btn-dark">Connect Backend</button></div>
+      <section class="content">
+        <div id="dashboardView">
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">Total Sales</div>
+              <div id="kpiSales" class="kpi-value">₱0.00</div>
+              <div id="kpiSalesSub" class="kpi-sub">0 transactions</div>
+            </div>
+
+            <div class="kpi-card red">
+              <div class="kpi-label">Expenses</div>
+              <div id="kpiExpenses" class="kpi-value">₱0.00</div>
+              <div id="kpiExpensesSub" class="kpi-sub">0 entries</div>
+            </div>
+
+            <div class="kpi-card green">
+              <div class="kpi-label">Net Income</div>
+              <div id="kpiIncome" class="kpi-value">₱0.00</div>
+              <div id="kpiMargin" class="kpi-sub">0% margin</div>
+            </div>
+
+            <div class="kpi-card violet">
+              <div class="kpi-label">Businesses</div>
+              <div id="kpiBusinesses" class="kpi-value">0</div>
+              <div class="kpi-sub">active records</div>
+            </div>
+
+            <div class="kpi-card amber">
+              <div class="kpi-label">Low Stock</div>
+              <div id="kpiLowStock" class="kpi-value">0</div>
+              <div class="kpi-sub">needs attention</div>
+            </div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2 class="panel-title">Sales vs Expenses</h2>
+                  <p class="panel-sub">Grouped by business</p>
+                </div>
+                <span class="pill">Performance</span>
+              </div>
+              <div class="chart-box">
+                <canvas id="chartBusiness"></canvas>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2 class="panel-title">ROI Split</h2>
+                  <p class="panel-sub">Sales, expenses, income</p>
+                </div>
+                <span class="pill">ROI</span>
+              </div>
+              <div class="chart-box">
+                <canvas id="chartRoi"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2 class="panel-title">Recent Sales</h2>
+                  <p class="panel-sub">Latest transactions</p>
+                </div>
+                <button class="btn sm" onclick="switchTab('sales')">View All</button>
+              </div>
+              <div id="recentSales"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2 class="panel-title">Low Stock Watchlist</h2>
+                  <p class="panel-sub">Materials below reorder level</p>
+                </div>
+              </div>
+              <div id="lowStockList"></div>
+            </div>
+          </div>
         </div>
 
-        <div id="dashboardView" class="space-y-6">
-          <div class="grid grid-cols-2 xl:grid-cols-5 gap-4">
-            <div class="kpi border-l-4 border-blue-500"><div class="text-xs font-black uppercase tracking-widest text-slate-400">Total Sales</div><div id="kpiSales" class="text-2xl md:text-3xl font-black mt-3">₱0.00</div><div id="kpiSalesSub" class="text-slate-500 mt-1">0 transactions</div></div>
-            <div class="kpi border-l-4 border-rose-500"><div class="text-xs font-black uppercase tracking-widest text-slate-400">Expenses</div><div id="kpiExpenses" class="text-2xl md:text-3xl font-black mt-3">₱0.00</div><div id="kpiExpensesSub" class="text-slate-500 mt-1">0 entries</div></div>
-            <div class="kpi border-l-4 border-emerald-500"><div class="text-xs font-black uppercase tracking-widest text-slate-400">Net Income</div><div id="kpiIncome" class="text-2xl md:text-3xl font-black mt-3">₱0.00</div><div id="kpiMargin" class="text-slate-500 mt-1">0% margin</div></div>
-            <div class="kpi border-l-4 border-violet-500"><div class="text-xs font-black uppercase tracking-widest text-slate-400">Businesses</div><div id="kpiBusinesses" class="text-2xl md:text-3xl font-black mt-3">0</div><div class="text-slate-500 mt-1">active records</div></div>
-            <div class="kpi border-l-4 border-amber-500"><div class="text-xs font-black uppercase tracking-widest text-slate-400">Low Stock</div><div id="kpiLowStock" class="text-2xl md:text-3xl font-black mt-3">0</div><div class="text-slate-500 mt-1">needs attention</div></div>
-          </div>
-          <div class="chart-grid grid grid-cols-1 xl:grid-cols-[1.6fr_.9fr] gap-6">
-            <div class="glass rounded-3xl p-5 md:p-7"><div class="flex items-start justify-between"><div><h2 class="font-black text-xl">Sales vs Expenses</h2><p class="text-slate-500 text-sm">Grouped by business</p></div><span class="chip text-blue-700 bg-blue-50">Performance</span></div><div class="h-[320px] mt-4"><canvas id="businessChart"></canvas></div></div>
-            <div class="glass rounded-3xl p-5 md:p-7"><div class="flex items-start justify-between"><div><h2 class="font-black text-xl">ROI Split</h2><p class="text-slate-500 text-sm">Sales, expenses, income</p></div><span class="chip text-emerald-700 bg-emerald-50">ROI</span></div><div class="h-[320px] mt-4"><canvas id="roiChart"></canvas></div></div>
-          </div>
-          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div class="glass rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><h2 class="font-black text-xl">Recent Sales</h2><button onclick="showTab('sales')" class="font-black text-emerald-700 text-sm">VIEW ALL</button></div><div id="recentSales" class="space-y-2"></div></div>
-            <div class="glass rounded-3xl p-5"><div class="flex justify-between items-center mb-3"><h2 class="font-black text-xl">Low Stock Watchlist</h2><button onclick="showTab('materials')" class="font-black text-emerald-700 text-sm">MANAGE</button></div><div id="lowStockList" class="space-y-2"></div></div>
-          </div>
-        </div>
+        <div id="tableView" class="table-shell hidden">
+          <div class="table-toolbar">
+            <div id="tableTitle" class="table-title">Table</div>
 
-        <div id="tableView" class="hidden glass rounded-3xl overflow-hidden">
-          <div class="p-4 md:p-6 border-b border-slate-200 flex flex-col gap-3">
-            <div class="flex flex-col lg:flex-row lg:items-center gap-3"><div><h2 id="tableTitle" class="text-2xl font-black">Table</h2><p id="tableSub" class="text-slate-500 text-sm">Manage records</p></div><div class="lg:ml-auto flex flex-wrap gap-2"><button id="addRecordBtn" onclick="openRecordModal()" class="btn btn-dark">+ ADD NEW</button><button onclick="exportCsv()" class="btn btn-soft">EXPORT CSV</button><button onclick="exportPdf()" class="btn btn-soft">REPORT PDF</button></div></div>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-2"><input id="searchBox" oninput="renderTable()" placeholder="Search records..." class="lb-input md:col-span-2"><select id="tableBusinessFilter" onchange="renderTable()" class="lb-input"></select><select id="tableStatusFilter" onchange="renderTable()" class="lb-input"><option value="">All Status/Type</option></select><button onclick="openColumnPanel()" class="btn btn-soft">Columns</button></div>
+            <select id="tableBusinessFilter" class="select" onchange="renderCurrentTable()">
+              <option value="ALL">All Businesses</option>
+            </select>
+
+            <select id="statusFilter" class="select" onchange="renderCurrentTable()">
+              <option value="">All Status/Types</option>
+            </select>
+
+            <input id="dateFrom" type="date" class="input" onchange="renderCurrentTable()">
+            <input id="dateTo" type="date" class="input" onchange="renderCurrentTable()">
+
+            <input id="searchBox" class="input" placeholder="Search..." oninput="renderCurrentTable()">
+
+            <button id="columnsBtn" class="btn" onclick="toggleColumns()">Columns</button>
+            <button class="btn blue" onclick="openForm()">Add New</button>
           </div>
-          <div class="table-wrap overflow-auto thin-scroll"><table class="w-full text-left"><thead id="thead" class="sticky top-0 z-10 bg-slate-900 text-white text-xs uppercase tracking-wider"></thead><tbody id="tbody" class="divide-y divide-slate-100 bg-white"></tbody></table></div>
-          <div class="p-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between"><div id="pageInfo" class="text-sm text-slate-500 font-semibold">0 records</div><div class="flex gap-2"><button onclick="changePage(-1)" class="btn btn-soft">Prev</button><button onclick="changePage(1)" class="btn btn-soft">Next</button></div></div>
+
+          <div id="columnPanel" class="hidden p-4 border-b border-slate-200 bg-slate-50"></div>
+
+          <div class="table-wrap">
+            <table>
+              <thead id="thead"></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>
+
+    <nav class="bottom-nav">
+      <button data-bottom="dashboard" class="active" onclick="switchTab('dashboard')">📊<br>Home</button>
+      <button data-bottom="sales" onclick="switchTab('sales')">💰<br>Sales</button>
+      <button data-bottom="expenses" onclick="switchTab('expenses')">🧾<br>Expenses</button>
+      <button data-bottom="inventory" onclick="switchTab('inventory')">📦<br>Stock</button>
+      <button onclick="openProfile()">👤<br>Profile</button>
+    </nav>
   </div>
 
-  <nav class="bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 grid-cols-5 p-2 shadow-[0_-10px_30px_rgba(15,23,42,.08)]">
-    <button onclick="showTab('dashboard')" class="p-2 text-xs font-black text-emerald-700">📊<br>Dash</button><button onclick="showTab('sales')" class="p-2 text-xs font-black">💰<br>Sales</button><button onclick="showTab('expenses')" class="p-2 text-xs font-black">🧾<br>Costs</button><button onclick="showTab('materials')" class="p-2 text-xs font-black">🧱<br>Items</button><button onclick="openProfile()" class="p-2 text-xs font-black">👤<br>Profile</button>
-  </nav>
+  <div id="settingsModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 class="modal-title">Backend Settings</h2>
+        <button class="btn sm" onclick="closeModal('settingsModal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-field">
+          <label>Connection Key</label>
+          <textarea id="connectionKey" placeholder="Paste your Lee Business connection key here"></textarea>
+        </div>
+        <p class="text-slate-500 text-sm mt-3">
+          The key is saved in this browser. The backend settings will not pop up again after a valid key is saved.
+        </p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="clearConnection()">Clear Saved Key</button>
+        <button class="btn blue" onclick="saveConnection()">Save & Connect</button>
+      </div>
+    </div>
+  </div>
 
-  <div id="loginOverlay" class="hidden fixed inset-0 z-[80] bg-slate-950/90 backdrop-blur flex items-center justify-center p-4"><div class="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl text-center"><div class="mx-auto w-16 h-16 rounded-3xl bg-gradient-to-br from-emerald-700 to-blue-500 text-white grid place-items-center font-black text-2xl mb-4">L</div><h2 class="text-2xl font-black">Lee Business</h2><p class="text-sm text-slate-500 mt-1 mb-6">Sign in to sync and edit records.</p><div id="g_id_onload" data-client_id="488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com" data-callback="handleGoogleLogin" data-auto_prompt="false" data-auto_select="true"></div><div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="pill" data-logo_alignment="left" data-width="300"></div><p id="loginMsg" class="mt-4 text-sm text-red-600 font-bold"></p><button onclick="closeLogin()" class="mt-4 text-sm font-bold text-slate-500">Continue with cached data</button></div></div>
+  <div id="profileModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 class="modal-title">Profile Settings</h2>
+        <button class="btn sm" onclick="closeModal('profileModal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="flex items-center gap-4 mb-6">
+          <div id="profilePreviewAvatar" class="avatar" style="width:72px;height:72px;font-size:24px;">
+            <img id="profilePreviewImg" alt="Profile Preview">
+            <span id="profilePreviewInitials">PR</span>
+          </div>
+          <div>
+            <div id="profileModalName" class="text-xl font-black">Profile</div>
+            <div id="profileModalEmail" class="text-slate-500 font-bold text-sm">email</div>
+            <div class="text-slate-400 text-xs font-black uppercase mt-1">Google name is used automatically</div>
+          </div>
+        </div>
 
-  <div id="settingsModal" class="modal fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur items-center justify-center p-4"><div class="w-full max-w-xl bg-white rounded-[2rem] shadow-2xl overflow-hidden"><div class="p-6 border-b"><h2 class="text-2xl font-black">Backend Settings</h2><p class="text-slate-500 text-sm mt-1">Paste your single Connection Key. Saved locally after connection.</p></div><div class="p-6 space-y-4"><textarea id="connectionKey" rows="5" class="lb-input font-mono text-xs" placeholder="Paste Lee Business Connection Key here"></textarea><p id="settingsMsg" class="text-sm text-red-600 font-bold"></p><div class="flex justify-end gap-2"><button onclick="closeSettings()" class="btn btn-soft">Close</button><button onclick="saveConnectionKey()" class="btn btn-dark">Save & Connect</button></div></div></div></div>
+        <div class="form-grid">
+          <div class="form-field span-2">
+            <label>Profile Photo URL</label>
+            <input id="profilePhotoUrl" placeholder="https://example.com/photo.jpg" oninput="previewProfilePhoto()">
+          </div>
+        </div>
 
-  <div id="profileModal" class="modal fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur items-center justify-center p-4"><div class="w-full max-w-2xl bg-white rounded-[2rem] shadow-2xl overflow-hidden"><div class="p-6 border-b flex items-center gap-4"><span id="profileAvatarBig" class="avatar !w-16 !h-16 text-xl">PR</span><div><h2 class="text-2xl font-black">Profile Settings</h2><p id="profileEmail" class="text-slate-500 text-sm">Not signed in</p></div><button onclick="closeProfile()" class="ml-auto btn btn-soft">Close</button></div><div class="p-6 grid md:grid-cols-2 gap-4"><label class="text-xs font-black uppercase text-slate-500">Display Name<span class="block text-[10px] normal-case text-slate-400 mt-0.5">Uses your Google account name</span><input id="profileName" readonly class="lb-input mt-1 normal-case font-medium bg-slate-100 cursor-not-allowed"></label><label class="text-xs font-black uppercase text-slate-500">Photo URL<input id="profilePhoto" class="lb-input mt-1 normal-case font-medium" placeholder="https://..."></label><div class="md:col-span-2"><h3 class="font-black mb-2">Online Users</h3><div id="profileOnlineList" class="flex flex-wrap gap-2"></div></div><div class="md:col-span-2 flex justify-end gap-2"><button onclick="openLogin()" class="btn btn-soft">Sign In</button><button onclick="saveProfile()" class="btn btn-green">Save Profile</button></div></div></div></div>
+        <div class="mt-6">
+          <h3 class="font-black mb-3">Online Users</h3>
+          <div id="onlineUsersList" class="flex flex-wrap gap-3"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeModal('profileModal')">Cancel</button>
+        <button class="btn blue" onclick="saveProfile()">Save Profile Photo</button>
+      </div>
+    </div>
+  </div>
 
-  <div id="recordModal" class="modal fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur items-center justify-center p-4"><div class="w-full max-w-3xl max-h-[92vh] bg-white rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"><div class="p-5 border-b flex items-center"><h2 id="recordTitle" class="text-xl font-black">Record</h2><button onclick="closeRecordModal()" class="ml-auto btn btn-soft">Close</button></div><form id="recordForm" onsubmit="saveRecord(event)" class="p-5 grid md:grid-cols-2 gap-4 overflow-auto thin-scroll"></form><div class="p-5 border-t flex justify-end gap-2"><button onclick="closeRecordModal()" type="button" class="btn btn-soft">Cancel</button><button type="submit" form="recordForm" class="btn btn-dark">Save</button></div></div></div>
+  <div id="formModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="formTitle" class="modal-title">Form</h2>
+        <button class="btn sm" onclick="closeModal('formModal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form id="recordForm" class="form-grid" onsubmit="saveForm(event)"></form>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeModal('formModal')">Cancel</button>
+        <button class="btn blue" onclick="document.getElementById('recordForm').requestSubmit()">Save</button>
+      </div>
+    </div>
+  </div>
 
-  <div id="columnModal" class="modal fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur items-center justify-center p-4"><div class="w-full max-w-md bg-white rounded-[2rem] shadow-2xl p-6"><h2 class="text-xl font-black mb-3">Column Visibility</h2><div id="columnChecks" class="space-y-2"></div><div class="mt-5 flex justify-end"><button onclick="closeColumnPanel()" class="btn btn-dark">Done</button></div></div></div>
+  <div id="loading" class="loading">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div id="loadingText" class="font-black text-lg">Loading...</div>
+      <div class="text-slate-500 mt-2 text-sm">Please wait</div>
+    </div>
+  </div>
 
-  <div id="loading" class="hidden fixed inset-0 z-[100] bg-slate-950/50 backdrop-blur-sm items-center justify-center"><div class="bg-white rounded-[2rem] p-7 shadow-2xl text-center min-w-[280px]"><div class="mx-auto w-14 h-14 rounded-2xl bg-slate-900 text-white grid place-items-center mb-4"><svg class="animate-spin h-7 w-7" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" opacity=".25"/><path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" fill="none"/></svg></div><div id="loadingText" class="font-black">Loading...</div></div></div>
-  <div id="toast" class="fixed right-4 bottom-24 z-[120] hidden max-w-sm rounded-2xl bg-slate-900 text-white px-4 py-3 font-bold shadow-2xl"></div>
+  <div id="toastWrap" class="toast-wrap"></div>
 
 <script>
-const CLIENT_ID='488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com';
-const LS={key:'lb_v8_connection_key',url:'lb_v8_backend_url',cache:'lb_v8_cache',user:'lb_v8_user'};
-function safeParse(value, fallback){ try { if(!value || value === 'undefined' || value === 'null') return fallback; return JSON.parse(value); } catch(e){ return fallback; } }
-var API_URL=localStorage.getItem(LS.url)||'', CONNECTION_KEY=localStorage.getItem(LS.key)||'', TOKEN='', USER=safeParse(localStorage.getItem(LS.user), null);
-var DB={businesses:[],sales:[],expenses:[],materials:[],inventory:[],products:[],logs:[],users:[]};
-var currentTab='dashboard', currentPage=1, pageSize=20, currentEditId=null, chart1=null, chart2=null, idleAt=Date.now(), syncTimer=null, heartbeatTimer=null, pendingRemote=null, isBusy=false;
-var schemas={businesses:{title:'Businesses',fields:[['name','Business Name','text',1],['description','Description','text',0],['status','Status','select:Active,Inactive',1]]},sales:{title:'Sales',fields:[['business_id','Business','business',1],['sale_date','Date','date',1],['item','Item','text',1],['product_id','Product','product',0],['price','Price','number',1],['qty','Qty','number',1],['customer','Customer','text',0],['payment_status','Payment Status','select:Paid,Unpaid,In-process',1],['remarks','Remarks','text',0]]},expenses:{title:'Expenses',fields:[['business_id','Business','business',1],['expense_date','Date','date',1],['item','Item','text',1],['type','Type','select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other',1],['vendor','Vendor','text',0],['price','Price','number',1],['qty','Qty','number',1],['remarks','Remarks','text',0]]},materials:{title:'Materials',fields:[['business_id','Business','business',1],['name','Material Name','text',1],['unit','Unit','text',1],['qty_on_hand','Qty On Hand','number',1],['cost_per_unit','Cost Per Unit','number',1],['reorder_level','Reorder Level','number',0],['status','Status','select:Active,Inactive',1]]},inventory:{title:'Inventory',fields:[['business_id','Business','business',1],['material_id','Material','material',1],['type','Type','select:IN,OUT,WASTE',1],['qty','Qty','number',1],['unit_cost','Unit Cost','number',0],['reference','Reference','text',0],['remarks','Remarks','text',0],['movement_date','Movement Date','date',1]]},products:{title:'Products',fields:[['business_id','Business','business',1],['name','Product Name','text',1],['sku','SKU','text',0],['selling_price','Selling Price','number',1],['target_margin_percent','Target Margin %','number',0],['status','Status','select:Active,Inactive',1]]},logs:{title:'Audit Logs',readOnly:1,fields:[]}};
-var visibleCols=safeParse(localStorage.getItem('lb_v8_cols'), {});
-function decodeKey(key){try{let k=String(key||'').trim(); if(k.startsWith('LBK1.')) k=k.slice(5); let s=atob(k.replace(/-/g,'+').replace(/_/g,'/')); return s.split('').reverse().join('')}catch(e){return''}}
-function money(n){return '₱'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} function num(v){let n=Number(String(v||0).replace(/[₱,\s]/g,''));return isFinite(n)?n:0} function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function bizName(id){return (DB.businesses.find(x=>x.id===id)||{}).name||'-'} function materialName(id){return (DB.materials.find(x=>x.id===id)||{}).name||'-'} function productName(id){return (DB.products.find(x=>x.id===id)||{}).name||'-'}
-function init(){bindActivity(); loadCache(); updateProfileUi(); if(!API_URL&&CONNECTION_KEY){API_URL=decodeKey(CONNECTION_KEY); if(API_URL) localStorage.setItem(LS.url,API_URL)} if(!API_URL) showConnectionPanel(true); else {showConnectionPanel(false); if(USER) reloadData(false); else tryGoogleAuto()} startIdleSync(); startHeartbeat(); renderAll();}
-function tryGoogleAuto(){setTimeout(()=>{if(window.google&&google.accounts&&google.accounts.id){google.accounts.id.initialize({client_id:CLIENT_ID,callback:handleGoogleLogin,auto_select:true});google.accounts.id.prompt();}},700)}
-function handleGoogleLogin(res){TOKEN=res.credential; apiPost({action:'verifyToken',token:TOKEN}).then(r=>{if(r.status!=='success')throw new Error(r.message||'Login failed'); USER=r.user; localStorage.setItem(LS.user,JSON.stringify(USER)); closeLogin(); updateProfileUi(); toast('Signed in'); reloadData(true);}).catch(e=>{document.getElementById('loginMsg').innerText=e.message;})}
-function openLogin(){document.getElementById('loginOverlay').classList.remove('hidden');document.getElementById('loginOverlay').classList.add('flex'); if(window.google&&google.accounts&&google.accounts.id){try{google.accounts.id.renderButton(document.querySelector('.g_id_signin'),{type:'standard',size:'large',theme:'outline',shape:'pill',width:300});}catch(e){}}}
-function closeLogin(){document.getElementById('loginOverlay').classList.add('hidden');document.getElementById('loginOverlay').classList.remove('flex')}
-function signOut(){TOKEN='';USER=null;localStorage.removeItem(LS.user);updateProfileUi();openLogin()}
-function openSettings(){document.getElementById('connectionKey').value=CONNECTION_KEY;document.getElementById('settingsModal').classList.add('show')} function closeSettings(){document.getElementById('settingsModal').classList.remove('show')}
-function saveConnectionKey(){let key=document.getElementById('connectionKey').value.trim(), url=decodeKey(key); if(!url.startsWith('https://script.google.com/macros/s/')||!url.endsWith('/exec')){document.getElementById('settingsMsg').innerText='Invalid Connection Key. Generate it from the Apps Script /exec URL.';return} CONNECTION_KEY=key;API_URL=url;localStorage.setItem(LS.key,key);localStorage.setItem(LS.url,url);closeSettings();showConnectionPanel(false);toast('Backend connected'); if(USER) reloadData(true); else openLogin()}
-async function apiPost(payload){if(!API_URL)throw new Error('Backend not connected'); let body=new URLSearchParams(); body.set('payload',JSON.stringify(payload)); let r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()}); let text=await r.text(); try{return JSON.parse(text)}catch(e){console.error(text);throw new Error('Backend returned HTML, not JSON. Check your Connection Key and Web App /exec deployment.')}}
-async function apiGet(){if(!API_URL)throw new Error('Backend not connected'); let r=await fetch(API_URL+'?t='+Date.now(),{cache:'no-store'}), text=await r.text(); try{return JSON.parse(text)}catch(e){console.error(text);throw new Error('Backend returned HTML, not JSON.')}}
-function showConnectionPanel(show){document.getElementById('connectionPanel').classList.toggle('hidden',!show)}
-function loadCache(){let c=safeParse(localStorage.getItem(LS.cache), null); if(c&&c.data){DB=c.data; document.getElementById('cachedBanner').classList.remove('hidden'); setSync('Cached','bg-amber-400');}}
-function saveCache(){localStorage.setItem(LS.cache,JSON.stringify({time:Date.now(),data:DB}))}
-async function reloadData(show=true){if(!API_URL){showConnectionPanel(true);return} if(show) loading('Syncing data...'); isBusy=true; try{let j=await apiPost({action:'getBootstrap',token:TOKEN}); if(j.status!=='success')throw new Error(j.message||'Load failed'); applyData(j.data); document.getElementById('cachedBanner').classList.add('hidden'); setSync('Online','bg-green-500'); toast('Data synced');}catch(e){toast(e.message,'err'); if(String(e.message).toLowerCase().includes('sign')) openLogin();}finally{isBusy=false;hideLoading();}}
-function applyData(data){DB={...DB,...data}; ['businesses','sales','expenses','materials','inventory','products','logs','users'].forEach(k=>DB[k]=Array.isArray(DB[k])?DB[k]:[]); saveCache(); fillFilters(); renderAll(); updateProfileUi();}
-function setSync(t,cls){document.getElementById('syncState').innerHTML=`<span class="w-2.5 h-2.5 rounded-full ${cls}"></span><span>${t}</span>`}
-function fillFilters(){let opts='<option value="ALL">All Businesses</option>'+DB.businesses.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join(''); document.getElementById('globalBusinessFilter').innerHTML=opts; document.getElementById('tableBusinessFilter').innerHTML=opts;}
-function selectedBiz(){return document.getElementById('globalBusinessFilter').value||'ALL'} function rows(key){let b=selectedBiz(); return (DB[key]||[]).filter(r=>b==='ALL'||r.business_id===b||r.id===b||!r.business_id)}
-function renderAll(){renderDashboard(); if(currentTab!=='dashboard') renderTable(); renderOnline()}
-function renderDashboard(){let sales=rows('sales'), ex=rows('expenses'), mats=rows('materials'), biz=selectedBiz()==='ALL'?DB.businesses:DB.businesses.filter(b=>b.id===selectedBiz()); let ts=sales.reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0), te=ex.reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0), inc=ts-te; kpiSales.innerText=money(ts);kpiExpenses.innerText=money(te);kpiIncome.innerText=money(inc);kpiBusinesses.innerText=biz.length;kpiLowStock.innerText=mats.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).length;kpiSalesSub.innerText=sales.length+' transactions';kpiExpensesSub.innerText=ex.length+' entries';kpiMargin.innerText=(ts?((inc/ts)*100).toFixed(1):0)+'% margin'; renderCharts(biz,sales,ex,ts,te,inc); recentSales.innerHTML=sales.slice(-5).reverse().map(s=>`<div class="flex items-center justify-between p-3 rounded-2xl bg-white border"><div><b>${esc(s.item)}</b><div class="text-xs text-slate-500">${esc(bizName(s.business_id))} • ${esc(s.sale_date)}</div></div><b>${money(num(s.total_price)||num(s.price)*num(s.qty||1))}</b></div>`).join('')||'<p class="text-slate-500">No sales yet.</p>'; lowStockList.innerHTML=mats.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).slice(0,6).map(m=>`<div class="flex items-center justify-between p-3 rounded-2xl bg-white border"><div><b>${esc(m.name)}</b><div class="text-xs text-slate-500">${esc(bizName(m.business_id))}</div></div><b class="text-amber-600">${esc(m.qty_on_hand||0)} ${esc(m.unit||'')}</b></div>`).join('')||'<p class="text-slate-500">No low stock items.</p>';}
-function renderCharts(biz,sales,ex,ts,te,inc){let labels=biz.map(b=>b.name), sd=biz.map(b=>sales.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0)), ed=biz.map(b=>ex.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0)); if(chart1)chart1.destroy(); chart1=new Chart(businessChart,{type:'bar',data:{labels,datasets:[{label:'Sales',data:sd,backgroundColor:'#38bdf8',borderRadius:8},{label:'Expenses',data:ed,backgroundColor:'#fb7185',borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}}); if(chart2)chart2.destroy(); chart2=new Chart(roiChart,{type:'doughnut',data:{labels:['Sales','Expenses','Income'],datasets:[{data:[ts,te,Math.max(inc,0)],backgroundColor:['#0ea5e9','#f43f5e','#22c55e']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}})}
-function showTab(tab){currentTab=tab; currentPage=1; document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab)); dashboardView.classList.toggle('hidden',tab!=='dashboard'); tableView.classList.toggle('hidden',tab==='dashboard'); pageTitle.innerText=tab==='dashboard'?'Dashboard':schemas[tab].title; if(tab!=='dashboard'){tableTitle.innerText=schemas[tab].title; tableSub.innerText='Manage '+schemas[tab].title.toLowerCase(); addRecordBtn.classList.toggle('hidden',!!schemas[tab].readOnly); buildStatusFilter(); renderTable();}}
-function buildStatusFilter(){let vals=[...new Set((DB[currentTab]||[]).flatMap(r=>[r.status,r.type,r.payment_status]).filter(Boolean))]; tableStatusFilter.innerHTML='<option value="">All Status/Type</option>'+vals.map(v=>`<option>${esc(v)}</option>`).join('')}
-function getTableRows(){let arr=[...(currentTab==='logs'?DB.logs:DB[currentTab]||[])], q=searchBox.value.toLowerCase(), bf=tableBusinessFilter.value||'ALL', sf=tableStatusFilter.value; return arr.filter(r=>(bf==='ALL'||r.business_id===bf||r.id===bf||currentTab==='logs')&&(!sf||r.status===sf||r.type===sf||r.payment_status===sf)&&(!q||JSON.stringify(r).toLowerCase().includes(q)))}
-function renderTable(){let data=getTableRows(), headers=Object.keys(data[0]||sampleHeaders(currentTab)).filter(h=>!String(h).startsWith('_')); if(!visibleCols[currentTab]) visibleCols[currentTab]={}; headers=headers.filter(h=>visibleCols[currentTab][h]!==false); thead.innerHTML='<tr>'+headers.map(h=>`<th class="px-4 py-3">${esc(label(h))}</th>`).join('')+(schemas[currentTab].readOnly?'':'<th class="px-4 py-3 text-right">Actions</th>')+'</tr>'; let start=(currentPage-1)*pageSize, page=data.slice(start,start+pageSize); tbody.innerHTML=page.map(r=>`<tr class="hover:bg-slate-50">${headers.map(h=>`<td class="px-4 py-3">${cell(h,r[h])}</td>`).join('')}${schemas[currentTab].readOnly?'':`<td class="px-4 py-3 text-right"><button onclick="openRecordModal('${esc(r.id)}')" class="font-black text-blue-700 mr-3">EDIT</button><button onclick="deleteRecord('${esc(r.id)}')" class="font-black text-red-700">DELETE</button></td>`}</tr>`).join('')||'<tr><td colspan="99" class="p-8 text-center text-slate-500">No records found.</td></tr>'; pageInfo.innerText=`${data.length} records • Page ${currentPage}/${Math.max(1,Math.ceil(data.length/pageSize))}`}
-function label(h){return h==='business_id'?'Business':h==='material_id'?'Material':h==='product_id'?'Product':h.replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())} function cell(h,v){if(h==='business_id')return esc(bizName(v));if(h==='material_id')return esc(materialName(v));if(h==='product_id')return esc(productName(v));if(['price','total_price','total_cost','cost_per_unit','unit_cost','selling_price'].includes(h))return money(v);return esc(v||'')}
-function sampleHeaders(t){return{businesses:{id:'',name:'',status:''},sales:{id:'',business_id:'',sale_date:'',item:'',price:'',qty:'',total_price:''},expenses:{id:'',business_id:'',expense_date:'',item:'',type:'',total_cost:''},materials:{id:'',business_id:'',name:'',qty_on_hand:'',cost_per_unit:''},inventory:{id:'',business_id:'',movement_date:'',material_id:'',type:'',qty:''},products:{id:'',business_id:'',name:'',selling_price:''},logs:{timestamp:'',email:'',action:'',detail:''}}[t]||{}}
-function changePage(d){let total=getTableRows().length, max=Math.max(1,Math.ceil(total/pageSize)); currentPage=Math.max(1,Math.min(max,currentPage+d)); renderTable()}
-function openRecordModal(id=null){currentEditId=id; let schema=schemas[currentTab], row=id?(DB[currentTab]||[]).find(r=>r.id===id):{}; recordTitle.innerText=(id?'Edit ':'Add ')+schema.title; recordForm.innerHTML=schema.fields.map(f=>field(f,row||{})).join(''); recordModal.classList.add('show')} function closeRecordModal(){recordModal.classList.remove('show')}
-function field([k,l,t,req],row){let v=row[k]||''; if(t==='business')return select(k,l,DB.businesses,'name',v,req); if(t==='material')return select(k,l,DB.materials,'name',v,req); if(t==='product')return select(k,l,DB.products,'name',v,req,true); if(t.startsWith('select:'))return `<label class="text-xs font-black uppercase text-slate-500">${esc(l)}<select name="${esc(k)}" ${req?'required':''} class="lb-input mt-1 normal-case">${t.split(':')[1].split(',').map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('')}</select></label>`; return `<label class="text-xs font-black uppercase text-slate-500">${esc(l)}<input name="${esc(k)}" type="${t}" value="${esc(v)}" ${req?'required':''} class="lb-input mt-1 normal-case"></label>`}
-function select(k,l,arr,disp,v,req,blank=false){return `<label class="text-xs font-black uppercase text-slate-500">${esc(l)}<select name="${esc(k)}" ${req?'required':''} class="lb-input mt-1 normal-case">${blank?'<option value="">—</option>':''}${arr.map(r=>`<option value="${esc(r.id)}" ${r.id===v?'selected':''}>${esc(r[disp])}</option>`).join('')}</select></label>`}
-async function saveRecord(e){e.preventDefault(); if(!USER){openLogin();return} let record=Object.fromEntries(new FormData(recordForm).entries()), action=currentEditId?'updateRecord':'createRecord', old=JSON.parse(JSON.stringify(DB)); if(currentEditId){record.id=currentEditId; let i=DB[currentTab].findIndex(r=>r.id===currentEditId); if(i>=0)DB[currentTab][i]={...DB[currentTab][i],...record}}else{record.id='tmp_'+Date.now(); DB[currentTab].unshift(record)} closeRecordModal(); renderAll(); try{let r=await apiPost({action,token:TOKEN,sheet:currentTab,id:currentEditId,record}); if(r.status!=='success')throw new Error(r.message||'Save failed'); await reloadData(false); toast('Saved')}catch(err){DB=old; renderAll(); toast(err.message,'err')}}
-async function deleteRecord(id){if(!USER){openLogin();return} if(!confirm('Delete this record?'))return; let old=JSON.parse(JSON.stringify(DB)); DB[currentTab]=DB[currentTab].filter(r=>r.id!==id); renderAll(); try{let r=await apiPost({action:'deleteRecord',token:TOKEN,sheet:currentTab,id}); if(r.status!=='success')throw new Error(r.message||'Delete failed'); await reloadData(false); toast('Deleted')}catch(e){DB=old;renderAll();toast(e.message,'err')}}
-function exportCsv(){let data=currentTab==='dashboard'?rows('sales'):getTableRows(); if(!data.length){toast('No records to export','err');return} let headers=Object.keys(data[0]); let csv=[headers.map(label).join(','),...data.map(r=>headers.map(h=>'"'+String(h==='business_id'?bizName(r[h]):r[h]??'').replace(/"/g,'""')+'"').join(','))].join('\n'); download(new Blob([csv],{type:'text/csv'}),'lee_business_'+currentTab+'.csv')}
-function exportPdf(){let data=currentTab==='dashboard'?rows('sales'):getTableRows(); const {jsPDF}=window.jspdf; let doc=new jsPDF('l','mm','a4'); doc.setFontSize(16);doc.setFont('helvetica','bold');doc.text('Lee Business Report',14,14);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Generated: '+new Date().toLocaleString(),14,20); let headers=Object.keys(data[0]||sampleHeaders(currentTab)).slice(0,9); doc.autoTable({startY:26,head:[headers.map(label)],body:data.map(r=>headers.map(h=>h==='business_id'?bizName(r[h]):r[h]??'')),styles:{fontSize:8},headStyles:{fillColor:[15,118,110]}}); download(doc.output('blob'),'lee_business_report.pdf')}
-function download(blob,name){let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),30000)}
-function openColumnPanel(){let headers=Object.keys(sampleHeaders(currentTab)); if(!visibleCols[currentTab])visibleCols[currentTab]={}; columnChecks.innerHTML=headers.map(h=>`<label class="flex items-center justify-between p-3 rounded-xl border"><span class="font-bold">${esc(label(h))}</span><input type="checkbox" ${visibleCols[currentTab][h]!==false?'checked':''} onchange="visibleCols['${currentTab}']['${h}']=this.checked;localStorage.setItem('lb_v8_cols',JSON.stringify(visibleCols));renderTable()"></label>`).join('');columnModal.classList.add('show')} function closeColumnPanel(){columnModal.classList.remove('show')}
-function openProfile(){const u=USER||{}; const n=u.name||'Profile'; document.getElementById('profileName').value=n; document.getElementById('profilePhoto').value=u.photo||u.photo_url||''; document.getElementById('profileEmail').innerText=u.email||'Not signed in'; renderOnline(); document.getElementById('profileModal').classList.add('show'); if(!USER) setTimeout(()=>toast('Sign in to sync profile changes','err'),100);} function closeProfile(){document.getElementById('profileModal').classList.remove('show')}
-async function saveProfile(){if(!USER){openLogin();return} let photo=document.getElementById('profilePhoto').value.trim(); try{let r=await apiPost({action:'updateProfile',token:TOKEN,photo_url:photo}); if(r.status!=='success')throw new Error(r.message||'Profile failed'); USER=r.user||{...USER,photo}; localStorage.setItem(LS.user,JSON.stringify(USER)); updateProfileUi(); closeProfile(); toast('Profile saved'); reloadData(false)}catch(e){toast(e.message,'err')}}
-function updateProfileUi(){let name=(USER&&USER.name)||'Profile', photo=(USER&&(USER.photo||USER.photo_url))||''; document.getElementById('profileNameTop').innerText=name; document.getElementById('profileAvatar').innerHTML=photo?`<img src="${esc(photo)}" onerror="this.parentElement.innerHTML='${esc(initials(name))}<span class=&quot;online-dot&quot;></span>'"><span class="online-dot"></span>`:`${esc(initials(name))}<span class="online-dot"></span>`; const big=document.getElementById('profileAvatarBig'); if(big) big.innerHTML=photo?`<img src="${esc(photo)}">`:esc(initials(name));}
-function initials(n){return String(n||'PR').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()||'PR'}
-function renderOnline(){let users=(DB.users||[]).filter(u=>isOnline(u)); onlineUsers.innerHTML=users.slice(0,4).map(u=>`<span class="avatar !w-8 !h-8 text-xs" title="${esc(u.name||u.email)}">${u.photo_url?`<img src="${esc(u.photo_url)}">`:esc(initials(u.name||u.email))}</span>`).join('')+(users.length?`<span class="text-xs font-black text-slate-500">${users.length} online</span>`:'<span class="text-xs font-black text-slate-500">No others</span>'); profileOnlineList.innerHTML=users.map(u=>`<div class="chip flex items-center gap-2"><span class="avatar !w-8 !h-8 text-xs">${u.photo_url?`<img src="${esc(u.photo_url)}">`:esc(initials(u.name||u.email))}</span>${esc(u.name||u.email)}</div>`).join('')||'<p class="text-slate-500">No online users.</p>'}
-function isOnline(u){let t=new Date(u.last_seen_at||0).getTime();return t&&Date.now()-t<70000}
-async function heartbeat(){if(!USER||!API_URL)return; try{let r=await apiPost({action:'heartbeat',token:TOKEN}); if(r.status==='success'&&r.users){DB.users=r.users; renderOnline();saveCache()}}catch(e){}}
-function startHeartbeat(){clearInterval(heartbeatTimer);heartbeatTimer=setInterval(heartbeat,15000)}
-function bindActivity(){['click','keydown','input','touchstart','mousemove'].forEach(ev=>document.addEventListener(ev,()=>idleAt=Date.now(),{passive:true}))}
-function anyModal(){return [...document.querySelectorAll('.modal')].some(m=>m.classList.contains('show'))||!document.getElementById('loginOverlay').classList.contains('hidden')}
-function startIdleSync(){clearInterval(syncTimer); syncTimer=setInterval(async()=>{if(!API_URL||isBusy||document.hidden||Date.now()-idleAt<5000)return; try{let j=await apiPost({action:'getBootstrap',token:TOKEN,light:1}); if(j.status==='success'){ if(anyModal()){pendingRemote=j.data; setSync('Update ready','bg-blue-500')} else {applyData(j.data); setSync('Online','bg-green-500')}}}catch(e){}},3000)}
-function applyPending(){if(pendingRemote&&!anyModal()){applyData(pendingRemote);pendingRemote=null}}
-setInterval(applyPending,2000);function loading(t){const box=document.getElementById('loading'); const txt=document.getElementById('loadingText'); if(txt) txt.innerText=t||'Loading...'; if(box){box.classList.remove('hidden');box.classList.add('flex');}} function hideLoading(){const box=document.getElementById('loading'); if(box){box.classList.add('hidden');box.classList.remove('flex');}}
-function toast(t,type='ok'){toast.innerText=t;toast.className=`fixed right-4 bottom-24 z-[120] max-w-sm rounded-2xl ${type==='err'?'bg-red-700':'bg-slate-900'} text-white px-4 py-3 font-bold shadow-2xl`;toast.classList.remove('hidden');setTimeout(()=>toast.classList.add('hidden'),3500)}
-document.addEventListener('DOMContentLoaded',init);
+/* ===================== CONFIG ===================== */
+const GOOGLE_CLIENT_ID = '488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com';
+
+const LS = {
+  KEY: 'lee_business_connection_key',
+  API: 'lee_business_api_url',
+  CACHE: 'lee_business_cache_v1',
+  USER: 'lee_business_last_user',
+  COLS: 'lee_business_column_visibility'
+};
+
+let API_URL = '';
+let TOKEN = '';
+let USER = null;
+let DB = {
+  businesses: [],
+  sales: [],
+  expenses: [],
+  materials: [],
+  inventory: [],
+  products: [],
+  logs: [],
+  users: []
+};
+
+let currentTab = 'dashboard';
+let editingId = null;
+let chartBusiness = null;
+let chartRoi = null;
+let isSyncing = false;
+let isMutating = false;
+let lastActivityAt = Date.now();
+let pendingRemoteData = null;
+let heartbeatTimer = null;
+let idleSyncTimer = null;
+let googleInitialized = false;
+
+const SCHEMAS = {
+  businesses: {
+    title: 'Businesses',
+    key: 'businesses',
+    fields: [
+      ['name', 'Business Name', 'text', true],
+      ['description', 'Description', 'textarea', false],
+      ['status', 'Status', 'select:Active,Inactive', true]
+    ]
+  },
+  sales: {
+    title: 'Sales',
+    key: 'sales',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['sale_date', 'Date', 'date', true],
+      ['item', 'Item', 'text', true],
+      ['product_id', 'Product', 'product', false],
+      ['price', 'Price', 'number', true],
+      ['qty', 'Qty', 'number', true],
+      ['customer', 'Customer', 'text', false],
+      ['payment_status', 'Payment Status', 'select:Paid,Unpaid,In-process', true],
+      ['remarks', 'Remarks', 'textarea', false]
+    ]
+  },
+  expenses: {
+    title: 'Expenses',
+    key: 'expenses',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['expense_date', 'Date', 'date', true],
+      ['item', 'Item', 'text', true],
+      ['type', 'Type', 'select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other', true],
+      ['vendor', 'Vendor', 'text', false],
+      ['price', 'Price', 'number', true],
+      ['qty', 'Qty', 'number', true],
+      ['remarks', 'Remarks', 'textarea', false]
+    ]
+  },
+  materials: {
+    title: 'Materials',
+    key: 'materials',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['name', 'Material Name', 'text', true],
+      ['unit', 'Unit', 'text', true],
+      ['qty_on_hand', 'Qty on Hand', 'number', true],
+      ['cost_per_unit', 'Cost per Unit', 'number', true],
+      ['reorder_level', 'Reorder Level', 'number', false],
+      ['status', 'Status', 'select:Active,Inactive', true]
+    ]
+  },
+  inventory: {
+    title: 'Inventory Movements',
+    key: 'inventory',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['material_id', 'Material', 'material', true],
+      ['type', 'Type', 'select:IN,OUT,WASTE', true],
+      ['qty', 'Qty', 'number', true],
+      ['unit_cost', 'Unit Cost', 'number', false],
+      ['reference', 'Reference', 'text', false],
+      ['remarks', 'Remarks', 'textarea', false],
+      ['movement_date', 'Movement Date', 'date', true]
+    ]
+  },
+  products: {
+    title: 'Products',
+    key: 'products',
+    fields: [
+      ['business_id', 'Business', 'business', true],
+      ['name', 'Product Name', 'text', true],
+      ['sku', 'SKU', 'text', false],
+      ['selling_price', 'Selling Price', 'number', true],
+      ['target_margin_percent', 'Target Margin %', 'number', false],
+      ['status', 'Status', 'select:Active,Inactive', true]
+    ]
+  },
+  logs: {
+    title: 'Audit Logs',
+    key: 'logs',
+    readOnly: true,
+    fields: []
+  }
+};
+
+/* ===================== INIT ===================== */
+document.addEventListener('DOMContentLoaded', init);
+
+function init() {
+  bindActivity();
+
+  loadCachedData();
+  loadSavedConnection();
+
+  waitForGoogle(initGoogleAuth);
+
+  if (API_URL && getCachedUser()) {
+    showApp();
+    renderAll();
+  }
+
+  startHeartbeat();
+  startIdleSync();
+}
+
+function bindActivity() {
+  ['click', 'keydown', 'mousemove', 'touchstart', 'input'].forEach(evt => {
+    document.addEventListener(evt, () => lastActivityAt = Date.now(), { passive: true });
+  });
+}
+
+function loadCachedData() {
+  const raw = localStorage.getItem(LS.CACHE);
+  if (!raw || raw === 'undefined') return;
+
+  try {
+    const cached = JSON.parse(raw);
+    if (cached && cached.data) {
+      DB = normalizeDb(cached.data);
+      renderAll();
+    }
+  } catch (e) {
+    localStorage.removeItem(LS.CACHE);
+  }
+}
+
+function cacheData() {
+  localStorage.setItem(LS.CACHE, JSON.stringify({
+    saved_at: new Date().toISOString(),
+    data: DB
+  }));
+}
+
+function loadSavedConnection() {
+  const savedKey = localStorage.getItem(LS.KEY) || '';
+  const savedApi = localStorage.getItem(LS.API) || '';
+
+  document.getElementById('connectionKey').value = savedKey;
+
+  if (savedApi) {
+    API_URL = savedApi;
+    return;
+  }
+
+  if (savedKey) {
+    API_URL = decodeConnectionKey(savedKey);
+    if (API_URL) localStorage.setItem(LS.API, API_URL);
+  }
+}
+
+function getCachedUser() {
+  const raw = localStorage.getItem(LS.USER);
+  if (!raw || raw === 'undefined') return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    localStorage.removeItem(LS.USER);
+    return null;
+  }
+}
+
+/* ===================== GOOGLE AUTH - SINGLE INIT ONLY ===================== */
+function waitForGoogle(callback, tries = 0) {
+  if (window.google && google.accounts && google.accounts.id) {
+    callback();
+    return;
+  }
+
+  if (tries > 80) {
+    setLoginError('Google Sign-In failed to load. Disable Brave Shields/adblock for this site, then refresh.');
+    return;
+  }
+
+  setTimeout(() => waitForGoogle(callback, tries + 1), 100);
+}
+
+function initGoogleAuth() {
+  if (googleInitialized) return;
+  googleInitialized = true;
+
+  google.accounts.id.initialize({
+    client_id: GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: true,
+    cancel_on_tap_outside: false,
+    use_fedcm_for_prompt: true
+  });
+
+  const btn = document.getElementById('googleSignInBtn');
+  if (btn) {
+    btn.innerHTML = '';
+    google.accounts.id.renderButton(btn, {
+      type: 'standard',
+      size: 'large',
+      theme: 'outline',
+      text: 'signin_with',
+      shape: 'pill',
+      logo_alignment: 'left',
+      width: 300
+    });
+  }
+
+  try {
+    google.accounts.id.prompt();
+  } catch (e) {
+    console.warn('Google prompt skipped:', e);
+  }
+}
+
+function handleGoogleCredential(response) {
+  if (!response || !response.credential) {
+    setLoginError('No Google credential received.');
+    return;
+  }
+
+  TOKEN = response.credential;
+  const info = parseJwt(TOKEN);
+
+  USER = {
+    email: info.email || '',
+    name: info.name || info.email || 'User',
+    picture: info.picture || ''
+  };
+
+  localStorage.setItem(LS.USER, JSON.stringify(USER));
+
+  showApp();
+  updateProfileUi();
+
+  if (API_URL) {
+    reloadData(false);
+  } else {
+    openSettings();
+  }
+}
+
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return {};
+  }
+}
+
+function setLoginError(message) {
+  document.getElementById('loginMsg').textContent = message || '';
+}
+
+function showApp() {
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  if (!USER) USER = getCachedUser();
+  updateProfileUi();
+}
+
+function logout() {
+  TOKEN = '';
+  USER = null;
+
+  localStorage.removeItem(LS.USER);
+
+  try {
+    if (window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.disableAutoSelect();
+    }
+  } catch (e) {}
+
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+
+  setTimeout(() => waitForGoogle(initGoogleAuth), 150);
+}
+
+/* ===================== CONNECTION KEY ===================== */
+function decodeConnectionKey(key) {
+  const k = String(key || '').trim();
+
+  if (!k) return '';
+
+  if (k.startsWith('https://script.google.com/macros/s/') && k.endsWith('/exec')) {
+    return k;
+  }
+
+  try {
+    let value = k;
+
+    if (value.startsWith('LBK1.')) value = value.slice(5);
+    if (value.startsWith('LBK1_')) value = value.slice(5);
+
+    value = value.replace(/-/g, '+').replace(/_/g, '/');
+    while (value.length % 4) value += '=';
+
+    const decoded = atob(value);
+
+    if (decoded.startsWith('https://script.google.com/macros/s/') && decoded.endsWith('/exec')) {
+      return decoded;
+    }
+  } catch (e) {}
+
+  return '';
+}
+
+function saveConnection() {
+  const key = document.getElementById('connectionKey').value.trim();
+
+  if (!key) {
+    toast('Connection key is required.', 'error');
+    return;
+  }
+
+  const url = decodeConnectionKey(key);
+
+  if (!url) {
+    toast('Invalid Connection Key. Generate a new key using your Apps Script /exec URL.', 'error');
+    return;
+  }
+
+  API_URL = url;
+  localStorage.setItem(LS.KEY, key);
+  localStorage.setItem(LS.API, url);
+
+  closeModal('settingsModal');
+  toast('Backend connected.', 'success');
+
+  if (TOKEN) reloadData();
+}
+
+function clearConnection() {
+  localStorage.removeItem(LS.KEY);
+  localStorage.removeItem(LS.API);
+  API_URL = '';
+  document.getElementById('connectionKey').value = '';
+  toast('Saved connection removed.', 'success');
+}
+
+function openSettings() {
+  document.getElementById('connectionKey').value = localStorage.getItem(LS.KEY) || '';
+  openModal('settingsModal');
+}
+
+/* ===================== API ===================== */
+async function apiPost(payload) {
+  if (!API_URL) throw new Error('Backend is not connected.');
+
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+
+  const text = await res.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('Backend returned non-JSON:', text);
+    throw new Error('Backend returned HTML, not JSON. Check that your Connection Key uses the Apps Script /exec URL, not GitHub URL.');
+  }
+}
+
+async function apiGet() {
+  if (!API_URL) throw new Error('Backend is not connected.');
+
+  const res = await fetch(API_URL + '?t=' + Date.now(), {
+    method: 'GET',
+    cache: 'no-store'
+  });
+
+  const text = await res.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('Backend returned non-JSON:', text);
+    throw new Error('Backend returned HTML, not JSON. Check Apps Script deployment access.');
+  }
+}
+
+async function reloadData(showOverlay = true) {
+  if (!API_URL) {
+    openSettings();
+    return;
+  }
+
+  if (isSyncing) return;
+
+  try {
+    isSyncing = true;
+    if (showOverlay) loading(true, 'Syncing data...');
+
+    const res = await apiPost({
+      action: 'getBootstrap',
+      token: TOKEN,
+      user: USER
+    });
+
+    if (res.status !== 'success') {
+      throw new Error(res.message || 'Failed to load data.');
+    }
+
+    DB = normalizeDb(res.data || {});
+    if (res.user) {
+      USER = { ...USER, ...res.user, name: USER?.name || res.user.name };
+      localStorage.setItem(LS.USER, JSON.stringify(USER));
+    }
+
+    cacheData();
+    updateProfileUi();
+    renderAll();
+    setStatus(true);
+    toast('Data synced.', 'success');
+  } catch (e) {
+    setStatus(false);
+    toast(e.message, 'error');
+  } finally {
+    isSyncing = false;
+    if (showOverlay) loading(false);
+  }
+}
+
+async function sendHeartbeat() {
+  if (!API_URL || !TOKEN || !USER || isSyncing || isMutating) return;
+
+  try {
+    const res = await apiPost({
+      action: 'heartbeat',
+      token: TOKEN,
+      user: USER
+    });
+
+    if (res.status === 'success') {
+      if (Array.isArray(res.users)) {
+        DB.users = res.users;
+        renderOnlineUsers();
+      }
+      setStatus(true);
+    }
+  } catch (e) {
+    setStatus(false);
+  }
+}
+
+function startHeartbeat() {
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(sendHeartbeat, 15000);
+}
+
+function startIdleSync() {
+  if (idleSyncTimer) clearInterval(idleSyncTimer);
+
+  idleSyncTimer = setInterval(async () => {
+    if (!API_URL || !TOKEN || isSyncing || isMutating) return;
+    if (Date.now() - lastActivityAt < 5000) return;
+
+    try {
+      const res = await apiPost({
+        action: 'getBootstrap',
+        token: TOKEN,
+        user: USER,
+        light: true
+      });
+
+      if (res.status !== 'success') return;
+
+      const newDb = normalizeDb(res.data || {});
+      const oldFingerprint = fingerprint(DB);
+      const newFingerprint = fingerprint(newDb);
+
+      if (oldFingerprint !== newFingerprint) {
+        if (isAnyModalOpen()) {
+          pendingRemoteData = newDb;
+        } else {
+          DB = newDb;
+          cacheData();
+          renderAll();
+          toast('New updates synced.', 'success');
+        }
+      }
+
+      setStatus(true);
+    } catch (e) {
+      setStatus(false);
+    }
+  }, 3000);
+}
+
+function applyPendingRemoteData() {
+  if (!pendingRemoteData) return;
+  DB = pendingRemoteData;
+  pendingRemoteData = null;
+  cacheData();
+  renderAll();
+  toast('Pending updates applied.', 'success');
+}
+
+/* ===================== DATA HELPERS ===================== */
+function normalizeDb(data) {
+  return {
+    businesses: Array.isArray(data.businesses) ? data.businesses : [],
+    sales: Array.isArray(data.sales) ? data.sales : [],
+    expenses: Array.isArray(data.expenses) ? data.expenses : [],
+    materials: Array.isArray(data.materials) ? data.materials : [],
+    inventory: Array.isArray(data.inventory) ? data.inventory : [],
+    products: Array.isArray(data.products) ? data.products : [],
+    logs: Array.isArray(data.logs) ? data.logs : [],
+    users: Array.isArray(data.users) ? data.users : []
+  };
+}
+
+function fingerprint(obj) {
+  return JSON.stringify({
+    b: obj.businesses,
+    s: obj.sales,
+    e: obj.expenses,
+    m: obj.materials,
+    i: obj.inventory,
+    p: obj.products,
+    u: obj.users
+  });
+}
+
+function selectedBusinessGlobal() {
+  return document.getElementById('businessFilter')?.value || 'ALL';
+}
+
+function selectedBusinessTable() {
+  return document.getElementById('tableBusinessFilter')?.value || selectedBusinessGlobal();
+}
+
+function rows(key, useTableFilter = false) {
+  const bid = useTableFilter ? selectedBusinessTable() : selectedBusinessGlobal();
+  const arr = DB[key] || [];
+
+  if (bid === 'ALL') return arr;
+
+  return arr.filter(r =>
+    r.business_id === bid ||
+    r.id === bid ||
+    !r.business_id && key === 'businesses'
+  );
+}
+
+function money(v) {
+  const n = num(v);
+  return '₱' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function num(v) {
+  const n = Number(String(v ?? 0).replace(/[₱,\s]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function businessName(id) {
+  return (DB.businesses.find(b => b.id === id) || {}).name || '-';
+}
+
+function materialName(id) {
+  return (DB.materials.find(m => m.id === id) || {}).name || '-';
+}
+
+function productName(id) {
+  return (DB.products.find(p => p.id === id) || {}).name || '-';
+}
+
+function shortId(id) {
+  const s = String(id || '');
+  return s.length <= 4 ? s : s.slice(-4).toUpperCase();
+}
+
+/* ===================== RENDER ===================== */
+function renderAll() {
+  fillBusinessFilters();
+  renderDashboard();
+  if (currentTab !== 'dashboard') renderCurrentTable();
+  renderOnlineUsers();
+}
+
+function fillBusinessFilters() {
+  const html = '<option value="ALL">All Businesses</option>' +
+    DB.businesses.map(b => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');
+
+  const a = document.getElementById('businessFilter');
+  const b = document.getElementById('tableBusinessFilter');
+
+  const oldA = a.value || 'ALL';
+  const oldB = b.value || 'ALL';
+
+  a.innerHTML = html;
+  b.innerHTML = html;
+
+  a.value = [...a.options].some(o => o.value === oldA) ? oldA : 'ALL';
+  b.value = [...b.options].some(o => o.value === oldB) ? oldB : 'ALL';
+}
+
+function renderDashboard() {
+  const sales = rows('sales');
+  const expenses = rows('expenses');
+  const materials = rows('materials');
+  const businesses = selectedBusinessGlobal() === 'ALL'
+    ? DB.businesses
+    : DB.businesses.filter(b => b.id === selectedBusinessGlobal());
+
+  const totalSales = sales.reduce((a, r) => a + (num(r.total_price) || num(r.price) * num(r.qty || 1)), 0);
+  const totalExpenses = expenses.reduce((a, r) => a + (num(r.total_cost) || num(r.price) * num(r.qty || 1)), 0);
+  const income = totalSales - totalExpenses;
+  const margin = totalSales ? (income / totalSales) * 100 : 0;
+  const lowStock = materials.filter(m => num(m.qty_on_hand) <= num(m.reorder_level)).length;
+
+  setText('kpiSales', money(totalSales));
+  setText('kpiExpenses', money(totalExpenses));
+  setText('kpiIncome', money(income));
+  setText('kpiBusinesses', businesses.length);
+  setText('kpiLowStock', lowStock);
+  setText('kpiSalesSub', `${sales.length} transactions`);
+  setText('kpiExpensesSub', `${expenses.length} entries`);
+  setText('kpiMargin', `${margin.toFixed(1)}% margin`);
+
+  renderCharts(businesses, sales, expenses, totalSales, totalExpenses, income);
+  renderRecentSales(sales);
+  renderLowStock(materials);
+}
+
+function renderCharts(businesses, sales, expenses, totalSales, totalExpenses, income) {
+  const labels = businesses.map(b => b.name || 'Unnamed');
+
+  const salesData = businesses.map(b => sales
+    .filter(r => r.business_id === b.id)
+    .reduce((a, r) => a + (num(r.total_price) || num(r.price) * num(r.qty || 1)), 0));
+
+  const expenseData = businesses.map(b => expenses
+    .filter(r => r.business_id === b.id)
+    .reduce((a, r) => a + (num(r.total_cost) || num(r.price) * num(r.qty || 1)), 0));
+
+  if (chartBusiness) chartBusiness.destroy();
+  chartBusiness = new Chart(document.getElementById('chartBusiness'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Sales', data: salesData, backgroundColor: '#38bdf8', borderRadius: 8 },
+        { label: 'Expenses', data: expenseData, backgroundColor: '#fb7185', borderRadius: 8 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  if (chartRoi) chartRoi.destroy();
+  chartRoi = new Chart(document.getElementById('chartRoi'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Sales', 'Expenses', 'Income'],
+      datasets: [{
+        data: [Math.max(totalSales, 0), Math.max(totalExpenses, 0), Math.max(income, 0)],
+        backgroundColor: ['#38bdf8', '#fb7185', '#fb923c']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+function renderRecentSales(sales) {
+  const target = document.getElementById('recentSales');
+  const recent = [...sales].slice(-6).reverse();
+
+  if (!recent.length) {
+    target.innerHTML = `<div class="text-slate-500 font-bold">No recent sales yet.</div>`;
+    return;
+  }
+
+  target.innerHTML = recent.map(s => `
+    <div class="flex justify-between items-center py-3 border-b border-slate-100">
+      <div>
+        <div class="font-black">${esc(s.item || '-')}</div>
+        <div class="text-sm text-slate-500">${esc(businessName(s.business_id))} • ${esc(s.sale_date || '')}</div>
+      </div>
+      <div class="font-black">${money(num(s.total_price) || num(s.price) * num(s.qty || 1))}</div>
+    </div>
+  `).join('');
+}
+
+function renderLowStock(materials) {
+  const target = document.getElementById('lowStockList');
+  const lows = materials.filter(m => num(m.qty_on_hand) <= num(m.reorder_level));
+
+  if (!lows.length) {
+    target.innerHTML = `<div class="text-slate-500 font-bold">No low stock materials.</div>`;
+    return;
+  }
+
+  target.innerHTML = lows.map(m => `
+    <div class="flex justify-between items-center py-3 border-b border-slate-100">
+      <div>
+        <div class="font-black">${esc(m.name || '-')}</div>
+        <div class="text-sm text-slate-500">${esc(businessName(m.business_id))}</div>
+      </div>
+      <span class="pill">${esc(m.qty_on_hand || 0)} ${esc(m.unit || '')}</span>
+    </div>
+  `).join('');
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('sidebar').classList.remove('open');
+
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.bottom-nav button[data-bottom]').forEach(b => b.classList.toggle('active', b.dataset.bottom === tab));
+
+  if (tab === 'dashboard') {
+    document.getElementById('dashboardView').classList.remove('hidden');
+    document.getElementById('tableView').classList.add('hidden');
+    setText('pageTitle', 'Dashboard');
+    setText('pageSubtitle', 'Sales, expenses, inventory, and ROI analytics');
+    renderDashboard();
+    return;
+  }
+
+  document.getElementById('dashboardView').classList.add('hidden');
+  document.getElementById('tableView').classList.remove('hidden');
+
+  const schema = SCHEMAS[tab];
+  setText('pageTitle', schema.title);
+  setText('pageSubtitle', 'Manage records, filters, exports, and reports');
+  renderCurrentTable();
+}
+
+/* ===================== TABLE ===================== */
+function renderCurrentTable() {
+  const schema = SCHEMAS[currentTab];
+  if (!schema) return;
+
+  setText('tableTitle', schema.title);
+
+  let data = currentTab === 'logs' ? DB.logs : rows(schema.key, true);
+  const q = (document.getElementById('searchBox').value || '').toLowerCase();
+  const status = document.getElementById('statusFilter').value || '';
+  const from = document.getElementById('dateFrom').value || '';
+  const to = document.getElementById('dateTo').value || '';
+
+  data = data.filter(r => {
+    const date = r.sale_date || r.expense_date || r.movement_date || r.created_at || '';
+    const statusText = r.status || r.payment_status || r.type || '';
+
+    return (!q || JSON.stringify(r).toLowerCase().includes(q)) &&
+      (!status || statusText === status) &&
+      (!from || String(date) >= from) &&
+      (!to || String(date) <= to);
+  });
+
+  populateStatusFilter(data);
+
+  const headers = getHeaders(schema.key, data);
+  const visibleHeaders = getVisibleHeaders(schema.key, headers);
+
+  document.getElementById('thead').innerHTML =
+    `<tr>${visibleHeaders.map(h => `<th>${esc(headerLabel(h))}</th>`).join('')}${schema.readOnly ? '' : '<th>Actions</th>'}</tr>`;
+
+  document.getElementById('tbody').innerHTML = data.map(r => `
+    <tr>
+      ${visibleHeaders.map(h => `<td>${formatCell(h, r[h], r)}</td>`).join('')}
+      ${schema.readOnly ? '' : `
+        <td>
+          <button class="btn sm" onclick='openFormFromEncoded("${encodeURIComponent(JSON.stringify(r))}")'>Edit</button>
+          <button class="btn sm red" onclick='deleteRecord("${escAttr(r.id)}")'>Delete</button>
+        </td>
+      `}
+    </tr>
+  `).join('') || `<tr><td colspan="99" class="text-center text-slate-500 py-10">No records found.</td></tr>`;
+
+  renderColumnPanel(schema.key, headers);
+}
+
+function getHeaders(key, data) {
+  if (data[0]) return Object.keys(data[0]).filter(h => !['_row', 'row'].includes(h));
+
+  const samples = {
+    businesses: ['id', 'name', 'description', 'status', 'created_at'],
+    sales: ['id', 'business_id', 'sale_date', 'item', 'product_id', 'price', 'qty', 'total_price', 'customer', 'payment_status', 'remarks'],
+    expenses: ['id', 'business_id', 'expense_date', 'item', 'type', 'vendor', 'price', 'qty', 'total_cost', 'remarks'],
+    materials: ['id', 'business_id', 'name', 'unit', 'qty_on_hand', 'cost_per_unit', 'reorder_level', 'status'],
+    inventory: ['id', 'business_id', 'material_id', 'type', 'qty', 'unit_cost', 'reference', 'remarks', 'movement_date'],
+    products: ['id', 'business_id', 'name', 'sku', 'selling_price', 'target_margin_percent', 'status'],
+    logs: ['timestamp', 'email', 'action', 'detail']
+  };
+
+  return samples[key] || [];
+}
+
+function getVisibleHeaders(key, headers) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(LS.COLS) || '{}') || {}; } catch(e) {}
+
+  return headers.filter(h => {
+    if (saved[key] && typeof saved[key][h] === 'boolean') return saved[key][h];
+    if (h === 'business_id') return true;
+    return !['token', 'row_index'].includes(h);
+  });
+}
+
+function renderColumnPanel(key, headers) {
+  const panel = document.getElementById('columnPanel');
+  panel.innerHTML = headers.map(h => {
+    const checked = getVisibleHeaders(key, headers).includes(h);
+    return `
+      <label class="inline-flex items-center gap-2 mr-4 mb-2 font-bold text-sm">
+        <input type="checkbox" ${checked ? 'checked' : ''} onchange="setColumnVisible('${key}','${h}',this.checked)">
+        ${esc(headerLabel(h))}
+      </label>
+    `;
+  }).join('');
+}
+
+function setColumnVisible(key, h, visible) {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(LS.COLS) || '{}') || {}; } catch(e) {}
+  if (!saved[key]) saved[key] = {};
+  saved[key][h] = visible;
+  localStorage.setItem(LS.COLS, JSON.stringify(saved));
+  renderCurrentTable();
+}
+
+function toggleColumns() {
+  document.getElementById('columnPanel').classList.toggle('hidden');
+}
+
+function populateStatusFilter(data) {
+  const sel = document.getElementById('statusFilter');
+  const old = sel.value || '';
+
+  const vals = [...new Set(data.map(r => r.status || r.payment_status || r.type || '').filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">All Status/Types</option>' +
+    vals.map(v => `<option value="${escAttr(v)}">${esc(v)}</option>`).join('');
+
+  sel.value = vals.includes(old) ? old : '';
+}
+
+function headerLabel(h) {
+  if (h === 'business_id') return 'Business';
+  if (h === 'material_id') return 'Material';
+  if (h === 'product_id') return 'Product';
+  if (h === 'id') return 'ID';
+  return String(h).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatCell(h, v, row) {
+  if (h === 'id') return `<span class="id-short">#${esc(shortId(v))}</span>`;
+  if (h === 'business_id') return esc(businessName(v));
+  if (h === 'material_id') return esc(materialName(v));
+  if (h === 'product_id') return esc(productName(v));
+  if (['price', 'total_price', 'total_cost', 'cost_per_unit', 'unit_cost', 'selling_price'].includes(h)) return money(v);
+  if (['status', 'payment_status', 'type'].includes(h)) return `<span class="pill">${esc(v || '-')}</span>`;
+  return esc(v ?? '');
+}
+
+/* ===================== CRUD ===================== */
+function openForm(row = null) {
+  const schema = SCHEMAS[currentTab];
+  if (!schema || schema.readOnly) return;
+
+  editingId = row?.id || null;
+  setText('formTitle', `${editingId ? 'Edit' : 'Add'} ${schema.title}`);
+
+  const form = document.getElementById('recordForm');
+  form.innerHTML = schema.fields.map(([key, label, type, req]) => fieldHtml(key, label, type, req, row || {})).join('');
+
+  openModal('formModal');
+}
+
+function openFormFromEncoded(encoded) {
+  openForm(JSON.parse(decodeURIComponent(encoded)));
+}
+
+function fieldHtml(key, label, type, req, row) {
+  const val = row[key] ?? '';
+
+  if (type === 'business') return selectField(key, label, DB.businesses, 'name', val, req);
+  if (type === 'material') return selectField(key, label, DB.materials, 'name', val, req);
+  if (type === 'product') return selectField(key, label, DB.products, 'name', val, req, true);
+
+  if (type.startsWith('select:')) {
+    const options = type.split(':')[1].split(',');
+    return `
+      <div class="form-field">
+        <label>${esc(label)}</label>
+        <select name="${escAttr(key)}" ${req ? 'required' : ''}>
+          ${options.map(o => `<option value="${escAttr(o)}" ${o === val ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+        </select>
+      </div>
+    `;
+  }
+
+  if (type === 'textarea') {
+    return `
+      <div class="form-field span-2">
+        <label>${esc(label)}</label>
+        <textarea name="${escAttr(key)}" ${req ? 'required' : ''}>${esc(val)}</textarea>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="form-field">
+      <label>${esc(label)}</label>
+      <input name="${escAttr(key)}" type="${escAttr(type)}" value="${escAttr(val)}" ${req ? 'required' : ''}>
+    </div>
+  `;
+}
+
+function selectField(key, label, list, display, val, req, allowBlank = false) {
+  return `
+    <div class="form-field">
+      <label>${esc(label)}</label>
+      <select name="${escAttr(key)}" ${req ? 'required' : ''}>
+        ${allowBlank ? '<option value="">—</option>' : ''}
+        ${list.map(r => `<option value="${escAttr(r.id)}" ${r.id === val ? 'selected' : ''}>${esc(r[display] || '')}</option>`).join('')}
+      </select>
+    </div>
+  `;
+}
+
+async function saveForm(e) {
+  e.preventDefault();
+
+  const schema = SCHEMAS[currentTab];
+  const record = Object.fromEntries(new FormData(e.target).entries());
+  const action = editingId ? 'updateRecord' : 'createRecord';
+
+  if (editingId) record.id = editingId;
+  else record.id = makeId();
+
+  // computed totals
+  if (currentTab === 'sales') record.total_price = num(record.price) * num(record.qty || 1);
+  if (currentTab === 'expenses') record.total_cost = num(record.price) * num(record.qty || 1);
+
+  const before = JSON.parse(JSON.stringify(DB[schema.key] || []));
+
+  if (editingId) {
+    const idx = DB[schema.key].findIndex(r => r.id === editingId);
+    if (idx >= 0) DB[schema.key][idx] = { ...DB[schema.key][idx], ...record };
+  } else {
+    DB[schema.key].unshift(record);
+  }
+
+  closeModal('formModal');
+  renderAll();
+
+  try {
+    isMutating = true;
+    const res = await apiPost({
+      action,
+      token: TOKEN,
+      sheet: currentTab,
+      id: editingId,
+      record,
+      user: USER
+    });
+
+    if (res.status !== 'success') throw new Error(res.message || 'Save failed.');
+
+    toast('Saved successfully.', 'success');
+    await reloadData(false);
+  } catch (err) {
+    DB[schema.key] = before;
+    renderAll();
+    toast(err.message, 'error');
+  } finally {
+    isMutating = false;
+  }
+}
+
+async function deleteRecord(id) {
+  const schema = SCHEMAS[currentTab];
+  if (!schema || schema.readOnly) return;
+  if (!confirm('Delete this record? This will be logged.')) return;
+
+  const before = JSON.parse(JSON.stringify(DB[schema.key] || []));
+  DB[schema.key] = DB[schema.key].filter(r => r.id !== id);
+  renderAll();
+
+  try {
+    isMutating = true;
+    const res = await apiPost({
+      action: 'deleteRecord',
+      token: TOKEN,
+      sheet: currentTab,
+      id,
+      user: USER
+    });
+
+    if (res.status !== 'success') throw new Error(res.message || 'Delete failed.');
+
+    toast('Deleted successfully.', 'success');
+    await reloadData(false);
+  } catch (err) {
+    DB[schema.key] = before;
+    renderAll();
+    toast(err.message, 'error');
+  } finally {
+    isMutating = false;
+  }
+}
+
+/* ===================== PROFILE ===================== */
+function updateProfileUi() {
+  const user = USER || getCachedUser() || {};
+  const name = user.name || user.email || 'Profile';
+  const email = user.email || '';
+  const photo = user.photo_url || user.picture || '';
+
+  setText('profileName', name);
+  setText('profileInitials', initials(name));
+  setText('profileModalName', name);
+  setText('profileModalEmail', email);
+  setText('profilePreviewInitials', initials(name));
+
+  const img = document.getElementById('profileImg');
+  const avatar = document.getElementById('profileAvatar');
+  const previewImg = document.getElementById('profilePreviewImg');
+  const previewAvatar = document.getElementById('profilePreviewAvatar');
+
+  if (photo) {
+    img.src = photo;
+    avatar.classList.add('has-img');
+    previewImg.src = photo;
+    previewAvatar.classList.add('has-img');
+  } else {
+    img.removeAttribute('src');
+    avatar.classList.remove('has-img');
+    previewImg.removeAttribute('src');
+    previewAvatar.classList.remove('has-img');
+  }
+
+  document.getElementById('profilePhotoUrl').value = user.photo_url || '';
+}
+
+function openProfile() {
+  if (!USER) USER = getCachedUser();
+
+  if (!USER) {
+    toast('Please sign in first.', 'error');
+    return;
+  }
+
+  updateProfileUi();
+  renderOnlineUsers();
+  openModal('profileModal');
+}
+
+function previewProfilePhoto() {
+  const url = document.getElementById('profilePhotoUrl').value.trim();
+  const previewImg = document.getElementById('profilePreviewImg');
+  const previewAvatar = document.getElementById('profilePreviewAvatar');
+
+  if (url) {
+    previewImg.src = url;
+    previewAvatar.classList.add('has-img');
+  } else {
+    previewImg.removeAttribute('src');
+    previewAvatar.classList.remove('has-img');
+  }
+}
+
+async function saveProfile() {
+  const photoUrl = document.getElementById('profilePhotoUrl').value.trim();
+
+  USER = {
+    ...(USER || {}),
+    photo_url: photoUrl
+  };
+
+  localStorage.setItem(LS.USER, JSON.stringify(USER));
+  updateProfileUi();
+
+  try {
+    if (API_URL && TOKEN) {
+      const res = await apiPost({
+        action: 'updateProfile',
+        token: TOKEN,
+        user: USER,
+        photo_url: photoUrl
+      });
+
+      if (res.status !== 'success') throw new Error(res.message || 'Profile update failed.');
+    }
+
+    toast('Profile updated.', 'success');
+    closeModal('profileModal');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function renderOnlineUsers() {
+  const target = document.getElementById('onlineUsersList');
+  if (!target) return;
+
+  const users = Array.isArray(DB.users) ? DB.users : [];
+
+  const html = users.map(u => {
+    const name = u.name || u.email || 'User';
+    const photo = u.photo_url || u.picture || '';
+    return `
+      <div class="flex items-center gap-3 border border-slate-200 rounded-2xl p-3 bg-white">
+        <div class="avatar" style="width:38px;height:38px;">
+          ${photo ? `<img src="${escAttr(photo)}" style="display:block;width:100%;height:100%;object-fit:cover;">` : `<span>${esc(initials(name))}</span>`}
+        </div>
+        <div>
+          <div class="font-black text-sm">${esc(name)}</div>
+          <div class="text-xs text-slate-500">${esc(u.email || '')}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  target.innerHTML = html || `<div class="text-slate-500 font-bold">No other online users.</div>`;
+}
+
+function initials(name) {
+  const parts = String(name || 'User').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+/* ===================== EXPORT ===================== */
+function exportCsv() {
+  const schema = currentTab === 'dashboard' ? SCHEMAS.sales : SCHEMAS[currentTab];
+  if (!schema) return;
+
+  const data = currentTab === 'dashboard' ? rows('sales') : (currentTab === 'logs' ? DB.logs : rows(schema.key, true));
+  if (!data.length) {
+    toast('No data to export.', 'error');
+    return;
+  }
+
+  const headers = Object.keys(data[0]);
+  const csv = [
+    headers.map(headerLabel).join(','),
+    ...data.map(r => headers.map(h => csvEscape(h === 'business_id' ? businessName(r[h]) : r[h])).join(','))
+  ].join('\n');
+
+  downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `lee_business_${schema.key}.csv`);
+}
+
+function exportPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('l', 'mm', 'a4');
+
+  const schema = currentTab === 'dashboard' ? SCHEMAS.sales : SCHEMAS[currentTab];
+  const data = currentTab === 'dashboard' ? rows('sales') : (currentTab === 'logs' ? DB.logs : rows(schema.key, true));
+
+  if (!data.length) {
+    toast('No data to export.', 'error');
+    return;
+  }
+
+  const headers = Object.keys(data[0]).slice(0, 10);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text(`Lee Business - ${schema.title}`, 14, 16);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+  doc.autoTable({
+    startY: 28,
+    head: [headers.map(headerLabel)],
+    body: data.map(r => headers.map(h => String(h === 'business_id' ? businessName(r[h]) : (r[h] ?? '')))),
+    theme: 'grid',
+    headStyles: { fillColor: [15, 23, 42] },
+    styles: { fontSize: 8 }
+  });
+
+  doc.save(`lee_business_${schema.key}.pdf`);
+}
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+/* ===================== UI UTIL ===================== */
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  applyPendingRemoteData();
+}
+
+function isAnyModalOpen() {
+  return [...document.querySelectorAll('.modal')].some(m => m.classList.contains('show'));
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function loading(show, text = 'Loading...') {
+  const el = document.getElementById('loading');
+  const txt = document.getElementById('loadingText');
+
+  if (txt) txt.textContent = text;
+  if (el) el.classList.toggle('show', !!show);
+}
+
+function toast(message, type = '') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+function setStatus(online) {
+  const pill = document.getElementById('statusPill');
+  const text = document.getElementById('statusText');
+
+  pill.classList.toggle('online', !!online);
+  text.textContent = online ? 'Online' : 'Offline';
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>'"]/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[c]));
+}
+
+function escAttr(v) {
+  return esc(v);
+}
+
+function makeId() {
+  return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
 </script>
+
 </body>
 </html>
