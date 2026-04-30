@@ -1,360 +1,197 @@
-<!-- Lee Business Profile UI Hotfix
-Paste this block BEFORE the closing </body> tag of your index.html.
-It removes duplicate/floating profile buttons and keeps only a clean top-right profile chip. -->
-<style id="lee-profile-ui-hotfix-style">
-  /* Hide the old forced floating profile button and duplicate sidebar profile buttons */
-  #forceProfileBtn,
-  .force-profile-btn,
-  .floating-profile,
-  .profile-floating,
-  [data-force-profile="true"],
-  .lb-v5-force-profile,
-  .lee-v5-floating-profile {
-    display: none !important;
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lee Business</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter','system-ui','sans-serif'] } } } };
+  </script>
+  <style>
+    html,body{height:100%} body{font-family:Inter,system-ui,sans-serif;background:#f4f7fb}.dark body{background:#020617}
+    .sidebar-item{display:flex;align-items:center;gap:.85rem;width:100%;padding:.9rem 1rem;border-radius:1.1rem;font-weight:900;color:#334155;transition:.18s}
+    .dark .sidebar-item{color:#cbd5e1}.sidebar-item:hover{background:#eef6ff}.dark .sidebar-item:hover{background:#1e293b}.sidebar-item.active{background:#073b1f;color:white;box-shadow:0 18px 35px rgba(7,59,31,.16)}
+    .card{background:rgba(255,255,255,.94);border:1px solid #e2e8f0;border-radius:1.65rem;box-shadow:0 18px 50px rgba(15,23,42,.07)}.dark .card{background:rgba(15,23,42,.88);border-color:#1e293b;box-shadow:0 18px 50px rgba(0,0,0,.28)}
+    .modal{opacity:0;pointer-events:none;transition:.18s}.modal.active{opacity:1;pointer-events:auto}.thin-scroll::-webkit-scrollbar{width:10px;height:10px}.thin-scroll::-webkit-scrollbar-thumb{background:rgba(100,116,139,.35);border-radius:999px}
+    .profile-chip{display:flex;align-items:center;gap:.75rem;border:1px solid #e2e8f0;background:#fff;border-radius:999px;padding:.45rem .85rem .45rem .45rem;box-shadow:0 12px 30px rgba(15,23,42,.06);transition:.18s}.profile-chip:hover{transform:translateY(-1px);box-shadow:0 18px 40px rgba(15,23,42,.11);border-color:#93c5fd}.dark .profile-chip{background:#0f172a;border-color:#334155}
+    .avatar{width:42px;height:42px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;background:linear-gradient(135deg,#16a34a,#3b82f6);position:relative;overflow:hidden;border:3px solid rgba(255,255,255,.9)}.avatar img{width:100%;height:100%;object-fit:cover}.status-dot{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:999px;background:#22c55e;border:2px solid #fff}.dark .status-dot{border-color:#0f172a}
+    .toast{position:fixed;right:20px;bottom:20px;z-index:10000;display:flex;flex-direction:column;gap:10px}.toast-item{background:#0f172a;color:#fff;border-radius:16px;padding:12px 16px;font-size:13px;font-weight:800;box-shadow:0 18px 40px rgba(0,0,0,.22)}
+    .loading{opacity:0;pointer-events:none;transition:.18s}.loading.active{opacity:1;pointer-events:auto}.spinner{width:46px;height:46px;border-radius:999px;border:5px solid #dbeafe;border-top-color:#2563eb;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    @media(max-width:1024px){#sidebar{position:fixed;z-index:60;inset:0 auto 0 0;width:320px;transform:translateX(-105%);transition:.2s}#sidebar.open{transform:translateX(0)}#overlay.open{display:block}.hide-mobile{display:none}}
+  </style>
+</head>
+<body class="text-slate-900 dark:text-slate-100">
+  <div id="toast" class="toast"></div>
+  <div id="overlay" onclick="toggleSidebar(false)" class="hidden fixed inset-0 bg-slate-950/50 z-50 lg:hidden"></div>
 
-  /* If sidebar accidentally has two profile settings buttons, JS below keeps only the first. */
-  .lb-top-profile-area {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: 8px;
-  }
+  <div id="loginScreen" class="fixed inset-0 z-[90] bg-slate-950 flex items-center justify-center p-5">
+    <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-2xl border border-white/10 text-center">
+      <div class="mx-auto w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-500 to-blue-600 text-white flex items-center justify-center text-4xl font-black mb-5">L</div>
+      <h1 class="text-3xl font-black">Lee Business</h1>
+      <p class="mt-2 mb-6 text-sm text-slate-500 font-bold uppercase tracking-[.18em]">Command Center</p>
+      <div id="g_id_onload" data-client_id="488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com" data-callback="handleGoogleLogin" data-auto_prompt="false" data-auto_select="true"></div>
+      <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="pill" data-logo_alignment="left" data-width="300"></div>
+      <p id="loginMsg" class="mt-4 text-xs text-red-500 font-bold"></p>
+      <button onclick="showCachedApp()" class="mt-4 text-xs font-black text-slate-500 hover:text-blue-600">Open cached dashboard</button>
+    </div>
+  </div>
 
-  .lb-presence-mini {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 8px 10px;
-    border-radius: 999px;
-    border: 1px solid rgba(226, 232, 240, 0.95);
-    background: rgba(255, 255, 255, 0.72);
-    color: #64748b;
-    font-size: 11px;
-    font-weight: 900;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, .06);
-  }
+  <div id="app" class="hidden min-h-screen lg:grid lg:grid-cols-[330px_1fr]">
+    <aside id="sidebar" class="bg-white/95 dark:bg-slate-950/95 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+      <div class="p-5 h-[120px] flex items-center gap-4 border-b border-slate-200 dark:border-slate-800">
+        <div class="w-16 h-16 rounded-3xl bg-gradient-to-br from-emerald-500 to-blue-600 text-white flex items-center justify-center text-3xl font-black">L</div>
+        <div><div class="text-2xl font-black">Lee Business</div><div class="text-xs font-black tracking-[.18em] text-slate-400">COMMAND CENTER</div></div>
+        <button onclick="toggleSidebar(false)" class="ml-auto lg:hidden text-xl">×</button>
+      </div>
+      <nav class="p-4 space-y-2 flex-1">
+        <button class="sidebar-item active" data-tab="dashboard" onclick="showTab('dashboard')">📊 <span>Dashboard</span></button>
+        <button class="sidebar-item" data-tab="businesses" onclick="showTab('businesses')">🏢 <span>Businesses</span></button>
+        <button class="sidebar-item" data-tab="sales" onclick="showTab('sales')">💰 <span>Sales</span></button>
+        <button class="sidebar-item" data-tab="expenses" onclick="showTab('expenses')">🧾 <span>Expenses</span></button>
+        <button class="sidebar-item" data-tab="materials" onclick="showTab('materials')">🧱 <span>Materials</span></button>
+        <button class="sidebar-item" data-tab="inventory" onclick="showTab('inventory')">📦 <span>Inventory</span></button>
+        <button class="sidebar-item" data-tab="products" onclick="showTab('products')">🛍️ <span>Products</span></button>
+        <button class="sidebar-item" data-tab="logs" onclick="showTab('logs')">🕘 <span>Audit Logs</span></button>
+      </nav>
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+        <button onclick="openProfile()" class="w-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 rounded-2xl py-3 px-4 text-left font-black">👤 Profile Settings</button>
+        <button onclick="openBackend()" class="w-full bg-slate-100 dark:bg-slate-900 rounded-2xl py-3 px-4 text-left font-black">⚙️ Backend Settings</button>
+        <button onclick="logout()" class="w-full bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded-2xl py-3 px-4 text-left font-black">↪ Logout</button>
+      </div>
+    </aside>
 
-  .lb-presence-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: #22c55e;
-    box-shadow: 0 0 0 4px rgba(34,197,94,.12);
-  }
+    <main class="min-w-0">
+      <header class="h-auto xl:h-[118px] bg-white/92 dark:bg-slate-950/92 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 backdrop-blur px-4 md:px-7 py-4 flex flex-col xl:flex-row gap-4 xl:items-center">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="toggleSidebar(true)" class="lg:hidden w-11 h-11 rounded-2xl border border-slate-200 dark:border-slate-700">☰</button>
+          <div><h1 id="pageTitle" class="text-3xl font-black leading-none">Dashboard</h1><p class="text-xs md:text-sm font-black text-slate-500 tracking-[.18em] uppercase mt-2">Sales, expenses, inventory, and ROI analytics</p></div>
+        </div>
+        <div class="xl:ml-auto flex flex-wrap items-center gap-3">
+          <select id="businessFilter" onchange="renderAll()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-black min-w-[180px]"></select>
+          <div id="onlineBadge" class="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-black text-slate-500"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>ONLINE</div>
+          <div id="onlineUsers" class="flex items-center gap-[-8px]"></div>
+          <button id="profileChip" onclick="openProfile()" class="profile-chip">
+            <div id="profileAvatar" class="avatar">PR<span class="status-dot"></span></div>
+            <div class="text-left pr-2"><div id="profileNameTop" class="font-black text-sm leading-4">Profile</div><div class="text-[10px] font-black tracking-[.16em] text-slate-500">PROFILE</div></div>
+            <span class="text-slate-400">⌄</span>
+          </button>
+          <button onclick="syncNow()" class="px-6 py-3 rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950 font-black">SYNC</button>
+          <button onclick="exportCsv()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-black">CSV</button>
+          <button onclick="exportPdfReport()" class="px-5 py-3 rounded-2xl bg-emerald-600 text-white font-black">PDF</button>
+          <button onclick="toggleTheme()" class="w-12 h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">◐</button>
+        </div>
+      </header>
 
-  .lb-profile-chip {
-    border: 1px solid rgba(226, 232, 240, .95);
-    background: rgba(255,255,255,.88);
-    color: #0f172a;
-    border-radius: 999px;
-    min-height: 48px;
-    padding: 5px 12px 5px 5px;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 14px 35px rgba(15, 23, 42, .10);
-    cursor: pointer;
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
-    font-family: Inter, system-ui, sans-serif;
-    max-width: 235px;
-  }
+      <section id="viewDashboard" class="p-4 md:p-7 space-y-7">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5">
+          <div class="card p-7 border-l-4 border-blue-500"><p class="text-xs font-black text-slate-400 tracking-wider">TOTAL SALES</p><h2 id="kpiSales" class="text-3xl font-black mt-4">₱0.00</h2><p id="kpiSalesSub" class="text-sm text-slate-500 mt-1">0 transactions</p></div>
+          <div class="card p-7 border-l-4 border-red-500"><p class="text-xs font-black text-slate-400 tracking-wider">EXPENSES</p><h2 id="kpiExpenses" class="text-3xl font-black mt-4">₱0.00</h2><p id="kpiExpensesSub" class="text-sm text-slate-500 mt-1">0 entries</p></div>
+          <div class="card p-7 border-l-4 border-emerald-500"><p class="text-xs font-black text-slate-400 tracking-wider">NET INCOME</p><h2 id="kpiIncome" class="text-3xl font-black mt-4">₱0.00</h2><p id="kpiMargin" class="text-sm text-slate-500 mt-1">0.0% margin</p></div>
+          <div class="card p-7 border-l-4 border-violet-500"><p class="text-xs font-black text-slate-400 tracking-wider">BUSINESSES</p><h2 id="kpiBusinesses" class="text-3xl font-black mt-4">0</h2><p class="text-sm text-slate-500 mt-1">active records</p></div>
+          <div class="card p-7 border-l-4 border-amber-500"><p class="text-xs font-black text-slate-400 tracking-wider">LOW STOCK</p><h2 id="kpiLowStock" class="text-3xl font-black mt-4">0</h2><p class="text-sm text-slate-500 mt-1">needs attention</p></div>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-[1.55fr_.85fr] gap-7">
+          <div class="card p-7"><div class="flex justify-between mb-5"><div><h3 class="text-2xl font-black">Sales vs Expenses</h3><p class="text-slate-500">Grouped by business</p></div><span class="h-fit px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-xs font-black">Performance</span></div><div class="h-[360px]"><canvas id="chartBusiness"></canvas></div></div>
+          <div class="card p-7"><div class="flex justify-between mb-5"><div><h3 class="text-2xl font-black">ROI Split</h3><p class="text-slate-500">Sales, expenses, income</p></div><span class="h-fit px-4 py-2 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-black">ROI</span></div><div class="h-[360px]"><canvas id="chartRoi"></canvas></div></div>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-7"><div class="card p-7"><div class="flex justify-between mb-4"><h3 class="text-2xl font-black">Recent Sales</h3><button onclick="showTab('sales')" class="text-emerald-600 font-black text-sm">VIEW ALL</button></div><div id="recentSales" class="overflow-x-auto"></div></div><div class="card p-7"><h3 class="text-2xl font-black mb-4">Low Stock Watchlist</h3><div id="lowStockList"></div></div></div>
+      </section>
 
-  .lb-profile-chip:hover {
-    transform: translateY(-1px);
-    border-color: rgba(37, 99, 235, .45);
-    box-shadow: 0 18px 42px rgba(15, 23, 42, .14);
-    background: #ffffff;
-  }
+      <section id="viewTable" class="hidden p-4 md:p-7">
+        <div class="card overflow-hidden">
+          <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-4">
+            <div class="flex flex-col xl:flex-row xl:items-center gap-3"><div><h2 id="tableTitle" class="text-2xl font-black">Table</h2><p id="tableSub" class="text-slate-500 text-sm">Manage records</p></div><div class="xl:ml-auto flex flex-wrap gap-2"><input id="searchBox" oninput="renderTable()" class="px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 min-w-[280px]" placeholder="Search..."><select id="tableBusinessFilter" onchange="renderTable()" class="px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold"></select><button onclick="toggleColumns()" class="px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-black">Columns</button><button onclick="openForm()" id="addBtn" class="px-5 py-3 rounded-2xl bg-emerald-600 text-white font-black">ADD NEW</button></div></div>
+            <div class="flex flex-wrap gap-2"><input id="dateFrom" type="date" onchange="renderTable()" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"><input id="dateTo" type="date" onchange="renderTable()" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"><select id="statusFilter" onchange="renderTable()" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"></select><button onclick="clearFilters()" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 font-bold">Clear</button></div>
+            <div id="columnsPanel" class="hidden grid sm:grid-cols-2 lg:grid-cols-4 gap-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900"></div>
+          </div>
+          <div class="overflow-auto thin-scroll"><table class="w-full text-sm"><thead id="thead" class="bg-slate-950 text-white text-xs uppercase sticky top-0 z-10"></thead><tbody id="tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody></table></div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-  .lb-profile-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    overflow: hidden;
-    background: linear-gradient(135deg, #0f9f58, #2563eb);
-    color: white;
-    font-weight: 950;
-    font-size: 15px;
-    border: 3px solid rgba(255,255,255,.98);
-    box-shadow: 0 0 0 3px rgba(34,197,94,.18);
-    position: relative;
-  }
+  <div id="backendModal" class="modal fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4"><div class="card w-full max-w-xl p-7"><h2 class="text-2xl font-black">Backend Settings</h2><p class="text-sm text-slate-500 mt-2">Paste your single Lee Business Connection Key from the key generator.</p><label class="block text-xs font-black text-slate-500 mt-5 mb-2">CONNECTION KEY</label><textarea id="connectionKey" rows="5" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 font-mono text-xs"></textarea><p id="backendMsg" class="text-xs text-red-500 font-bold mt-3"></p><div class="flex justify-end gap-2 mt-5"><button onclick="closeBackend()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 font-black">Cancel</button><button onclick="saveBackend()" class="px-5 py-3 rounded-2xl bg-slate-950 text-white font-black">Save & Connect</button></div></div></div>
 
-  .lb-profile-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
+  <div id="profileModal" class="modal fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4"><div class="card w-full max-w-2xl p-7"><div class="flex items-start gap-4"><div id="profileBigAvatar" class="avatar !w-20 !h-20 text-2xl">PR<span class="status-dot"></span></div><div><h2 class="text-2xl font-black">Profile Settings</h2><p class="text-sm text-slate-500 mt-1">Update your display name and profile photo.</p></div></div><div class="grid md:grid-cols-2 gap-4 mt-6"><div><label class="text-xs font-black text-slate-500">EMAIL</label><input id="profileEmail" readonly class="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-3"></div><div><label class="text-xs font-black text-slate-500">DISPLAY NAME</label><input id="profileName" class="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3"></div><div class="md:col-span-2"><label class="text-xs font-black text-slate-500">PHOTO URL</label><input id="profilePhoto" oninput="previewProfile()" class="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3" placeholder="https://..."></div></div><div class="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900"><h3 class="font-black mb-3">Online Users</h3><div id="profileOnlineList" class="flex flex-wrap gap-3"></div></div><div class="flex justify-end gap-2 mt-6"><button onclick="closeProfile()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 font-black">Cancel</button><button onclick="saveProfile()" class="px-5 py-3 rounded-2xl bg-blue-600 text-white font-black">Save Profile</button></div></div></div>
 
-  .lb-profile-avatar::after {
-    content: '';
-    position: absolute;
-    right: -1px;
-    bottom: -1px;
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    border: 2px solid white;
-    background: #22c55e;
-  }
+  <div id="formModal" class="modal fixed inset-0 z-[100] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4"><div class="card w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden"><div class="p-6 border-b border-slate-200 dark:border-slate-800 flex"><h2 id="formTitle" class="text-2xl font-black">Form</h2><button onclick="closeForm()" class="ml-auto text-2xl">×</button></div><form id="recordForm" onsubmit="saveForm(event)" class="p-6 overflow-auto grid md:grid-cols-2 gap-4 thin-scroll"></form><div class="p-5 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2"><button onclick="closeForm()" type="button" class="px-5 py-3 rounded-2xl border font-black">Cancel</button><button class="px-5 py-3 rounded-2xl bg-slate-950 text-white font-black">Save</button></div></div></div>
 
-  .lb-profile-copy {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: 1.08;
-  }
+  <div id="loading" class="loading fixed inset-0 z-[120] bg-slate-950/55 backdrop-blur-sm flex items-center justify-center"><div class="card p-7 text-center w-[320px]"><div class="spinner mx-auto"></div><h3 id="loadingTitle" class="text-xl font-black mt-5">Loading</h3><p id="loadingText" class="text-sm text-slate-500 mt-1">Please wait...</p></div></div>
 
-  .lb-profile-name {
-    font-size: 13px;
-    font-weight: 950;
-    color: #0f172a;
-    max-width: 135px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .lb-profile-sub {
-    font-size: 9px;
-    font-weight: 950;
-    color: #64748b;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    margin-top: 3px;
-  }
-
-  .lb-profile-chevron {
-    font-size: 10px;
-    color: #94a3b8;
-    margin-left: 2px;
-  }
-
-  html.dark .lb-profile-chip,
-  .dark .lb-profile-chip {
-    background: rgba(15,23,42,.90);
-    border-color: rgba(51,65,85,.95);
-    color: #e2e8f0;
-  }
-
-  html.dark .lb-profile-chip:hover,
-  .dark .lb-profile-chip:hover {
-    background: rgba(30,41,59,.96);
-  }
-
-  html.dark .lb-profile-name,
-  .dark .lb-profile-name {
-    color: #f8fafc;
-  }
-
-  html.dark .lb-presence-mini,
-  .dark .lb-presence-mini {
-    background: rgba(15,23,42,.86);
-    border-color: rgba(51,65,85,.95);
-    color: #cbd5e1;
-  }
-
-  @media (max-width: 900px) {
-    .lb-presence-mini { display: none; }
-    .lb-profile-copy { display: none; }
-    .lb-profile-chip { padding: 5px; min-height: 46px; }
-    .lb-profile-chevron { display: none; }
-  }
-</style>
-
-<script id="lee-profile-ui-hotfix-script">
-(function () {
-  function safeText(value, fallback) {
-    value = String(value || '').trim();
-    return value || fallback || '';
-  }
-
-  function initials(name) {
-    name = safeText(name, 'User');
-    var parts = name.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-
-  function getCurrentName() {
-    return safeText(
-      window.currentActorName ||
-      window.CURRENT_USER?.name ||
-      window.USER?.name ||
-      localStorage.getItem('lee_profile_name') ||
-      localStorage.getItem('leeBusinessProfileName') ||
-      document.getElementById('myPresenceName')?.textContent ||
-      document.getElementById('userName')?.textContent,
-      'Profile'
-    );
-  }
-
-  function getCurrentPhoto() {
-    return safeText(
-      window.currentActorPhoto ||
-      window.CURRENT_USER?.picture ||
-      window.USER?.picture ||
-      localStorage.getItem('lee_profile_photo') ||
-      localStorage.getItem('leeBusinessProfilePhoto') ||
-      ''
-    );
-  }
-
-  function removeBadProfileButtons() {
-    var selectors = [
-      '#forceProfileBtn', '.force-profile-btn', '.floating-profile', '.profile-floating',
-      '[data-force-profile="true"]', '.lb-v5-force-profile', '.lee-v5-floating-profile'
-    ];
-    selectors.forEach(function (sel) {
-      document.querySelectorAll(sel).forEach(function (el) { el.remove(); });
-    });
-
-    // Remove duplicate Profile Settings buttons in the sidebar/footer area, keep one only.
-    var profileButtons = Array.from(document.querySelectorAll('button, a, div'))
-      .filter(function (el) {
-        var t = (el.textContent || '').trim().toLowerCase();
-        return t === 'profile settings' || t === '👤 profile settings' || t === 'profile';
-      })
-      .filter(function (el) { return !el.closest('.lb-top-profile-area'); });
-
-    var sidebarProfileButtons = profileButtons.filter(function (el) {
-      var rect = el.getBoundingClientRect();
-      return rect.left < (window.innerWidth * 0.45);
-    });
-
-    sidebarProfileButtons.forEach(function (el, idx) {
-      if (idx > 0) el.remove();
-    });
-  }
-
-  function findTopbarTarget() {
-    var candidates = Array.from(document.querySelectorAll('header .flex, header, .topbar, .navbar, .app-header'));
-    var best = null;
-    var bestScore = -1;
-
-    candidates.forEach(function (el) {
-      var text = (el.textContent || '').toLowerCase();
-      var score = 0;
-      if (text.includes('sync')) score += 5;
-      if (text.includes('csv')) score += 3;
-      if (text.includes('pdf')) score += 3;
-      if (text.includes('dashboard')) score += 1;
-      var rect = el.getBoundingClientRect();
-      if (rect.top < 180 && rect.width > 300) score += 3;
-      if (score > bestScore) { best = el; bestScore = score; }
-    });
-
-    return best || document.querySelector('header') || document.body;
-  }
-
-  function openProfile() {
-    if (typeof window.openProfileModal === 'function') return window.openProfileModal();
-    if (typeof window.openProfileSettings === 'function') return window.openProfileSettings();
-    if (typeof window.openProfile === 'function' && window.openProfile !== openProfile) return window.openProfile();
-
-    var modal = document.getElementById('profileModal') || document.getElementById('profileSettingsModal');
-    if (modal) {
-      modal.classList.add('active', 'show');
-      modal.style.display = 'flex';
-      return;
-    }
-
-    alert('Profile settings modal was not found in this index.html. Please update using the latest Code.gs and index.html package.');
-  }
-
-  function buildProfileChip() {
-    var old = document.getElementById('lbTopProfileArea');
-    if (old) old.remove();
-
-    var name = getCurrentName();
-    var photo = getCurrentPhoto();
-    var wrap = document.createElement('div');
-    wrap.id = 'lbTopProfileArea';
-    wrap.className = 'lb-top-profile-area';
-
-    var presence = document.createElement('div');
-    presence.className = 'lb-presence-mini';
-    presence.innerHTML = '<span class="lb-presence-dot"></span><span id="lbOnlineText">Online</span>';
-
-    var chip = document.createElement('button');
-    chip.type = 'button';
-    chip.id = 'lbTopProfileChip';
-    chip.className = 'lb-profile-chip';
-    chip.title = 'Open Profile Settings';
-    chip.onclick = openProfile;
-
-    var avatarHtml = photo
-      ? '<img src="' + photo.replace(/"/g, '&quot;') + '" alt="Profile" onerror="this.remove(); document.getElementById(\'lbProfileInitials\').style.display=\'inline-flex\';">'
-      : '';
-
-    chip.innerHTML = '' +
-      '<span class="lb-profile-avatar">' + avatarHtml + '<span id="lbProfileInitials" style="' + (photo ? 'display:none;' : 'display:inline-flex;') + 'align-items:center;justify-content:center;width:100%;height:100%;">' + initials(name) + '</span></span>' +
-      '<span class="lb-profile-copy"><span class="lb-profile-name">' + name + '</span><span class="lb-profile-sub">Profile</span></span>' +
-      '<span class="lb-profile-chevron">▾</span>';
-
-    wrap.appendChild(presence);
-    wrap.appendChild(chip);
-    return wrap;
-  }
-
-  function installProfileChip() {
-    removeBadProfileButtons();
-
-    var target = findTopbarTarget();
-    var chip = buildProfileChip();
-
-    // Put it before SYNC if possible, otherwise append to topbar.
-    var syncBtn = Array.from(target.querySelectorAll('button, a')).find(function (el) {
-      return (el.textContent || '').trim().toLowerCase() === 'sync';
-    });
-
-    if (syncBtn && syncBtn.parentElement) {
-      syncBtn.parentElement.insertBefore(chip, syncBtn);
-    } else {
-      target.appendChild(chip);
-      if (target !== document.body) {
-        target.style.display = target.style.display || 'flex';
-        target.style.alignItems = target.style.alignItems || 'center';
-      }
-    }
-  }
-
-  function refreshOnlineCount() {
-    var text = document.getElementById('lbOnlineText');
-    if (!text) return;
-
-    var count = 0;
-    try {
-      var users = window.usersDb || window.USERS || [];
-      if (Array.isArray(users)) {
-        var now = Date.now();
-        count = users.filter(function (u) {
-          var seen = Date.parse(u.last_seen_at || u.last_seen || u.lastSeen || '');
-          return seen && (now - seen) <= 70000;
-        }).length;
-      }
-    } catch (e) {}
-
-    text.textContent = count > 1 ? (count + ' online') : 'Online';
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    setTimeout(installProfileChip, 250);
-    setTimeout(installProfileChip, 1200);
-    setInterval(function () {
-      removeBadProfileButtons();
-      if (!document.getElementById('lbTopProfileChip')) installProfileChip();
-      refreshOnlineCount();
-    }, 5000);
-  });
-})();
+<script>
+const GOOGLE_CLIENT_ID='488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com';
+let API_URL=localStorage.getItem('lee_api_url')||'';let TOKEN='';let USER=JSON.parse(localStorage.getItem('lee_user')||'null');let DB=JSON.parse(localStorage.getItem('lee_cache')||'null')||emptyDb();let currentTab='dashboard';let editingId=null;let chartBusiness=null,chartRoi=null;let lastActivity=Date.now(),syncTimer=null,heartbeatTimer=null,isSyncing=false,isMutating=false,pendingData=null,lastFingerprint=localStorage.getItem('lee_fp')||'';
+const SCHEMAS={businesses:{title:'Businesses',fields:[['name','Business Name','text',1],['description','Description','text',0],['status','Status','select:Active,Inactive',1]]},sales:{title:'Sales',date:'sale_date',fields:[['business_id','Business','business',1],['sale_date','Date','date',1],['item','Item','text',1],['product_id','Product','product',0],['price','Price','number',1],['qty','Qty','number',1],['customer','Customer','text',0],['payment_status','Payment Status','select:Paid,Unpaid,In-process',1],['remarks','Remarks','text',0]]},expenses:{title:'Expenses',date:'expense_date',fields:[['business_id','Business','business',1],['expense_date','Date','date',1],['item','Item','text',1],['type','Type','select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other',1],['vendor','Vendor','text',0],['price','Price','number',1],['qty','Qty','number',1],['remarks','Remarks','text',0]]},materials:{title:'Materials',fields:[['business_id','Business','business',1],['name','Material Name','text',1],['unit','Unit','text',1],['qty_on_hand','Qty on Hand','number',1],['cost_per_unit','Cost / Unit','number',1],['reorder_level','Reorder Level','number',0],['status','Status','select:Active,Inactive',1]]},inventory:{title:'Inventory',date:'movement_date',fields:[['business_id','Business','business',1],['material_id','Material','material',1],['type','Type','select:IN,OUT,WASTE',1],['qty','Qty','number',1],['unit_cost','Unit Cost','number',0],['reference','Reference','text',0],['remarks','Remarks','text',0],['movement_date','Movement Date','date',1]]},products:{title:'Products',fields:[['business_id','Business','business',1],['name','Product Name','text',1],['sku','SKU','text',0],['selling_price','Selling Price','number',1],['target_margin_percent','Target Margin %','number',0],['status','Status','select:Active,Inactive',1]]},logs:{title:'Audit Logs',readOnly:true,fields:[]}};
+let colVis=JSON.parse(localStorage.getItem('lee_colvis')||'{}');
+function emptyDb(){return{businesses:[],sales:[],expenses:[],materials:[],inventory:[],products:[],logs:[],users:[]}}
+function handleGoogleLogin(r){TOKEN=r.credential;document.getElementById('loginMsg').textContent='';verifyAndLoad()}
+async function verifyAndLoad(){try{if(!API_URL){showApp();openBackend();return}showLoading('Signing in','Verifying your account...');const res=await post({action:'verifyToken',token:TOKEN});if(res.status!=='success')throw new Error(res.message||'Login failed');USER=res.user;localStorage.setItem('lee_user',JSON.stringify(USER));showApp();await syncNow();startTimers()}catch(e){document.getElementById('loginMsg').textContent=e.message;toast(e.message)}finally{hideLoading()}}
+function showCachedApp(){showApp();toast('Showing cached data')}
+function showApp(){document.getElementById('loginScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');renderAll();renderProfile()}
+function logout(){localStorage.removeItem('lee_user');TOKEN='';USER=null;location.reload()}
+function decodeKey(key){try{key=String(key||'').trim();if(key.startsWith('LBK1.'))key=key.split('.')[1]||'';key=key.replace(/-/g,'+').replace(/_/g,'/');while(key.length%4)key+='=';return atob(key)}catch(e){return''}}
+function openBackend(){document.getElementById('connectionKey').value=localStorage.getItem('lee_connection_key')||'';document.getElementById('backendModal').classList.add('active')}
+function closeBackend(){document.getElementById('backendModal').classList.remove('active')}
+async function saveBackend(){const k=document.getElementById('connectionKey').value.trim();const url=decodeKey(k);if(!url||!url.startsWith('https://script.google.com/macros/s/')||!url.endsWith('/exec')){document.getElementById('backendMsg').textContent='Invalid connection key. Generate it from your Apps Script /exec URL.';return}API_URL=url;localStorage.setItem('lee_api_url',url);localStorage.setItem('lee_connection_key',k);closeBackend();toast('Backend connected');if(TOKEN)await verifyAndLoad()}
+async function post(p){if(!API_URL)throw new Error('Backend is not connected.');const body=new URLSearchParams();Object.entries(p).forEach(([k,v])=>body.set(k,typeof v==='object'?JSON.stringify(v):String(v??'')));const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:body.toString()});const text=await r.text();try{return JSON.parse(text)}catch(e){console.error(text);throw new Error('Backend returned HTML, not JSON. Use the Apps Script Web App URL ending in /exec and deploy access as Anyone.')}}
+async function getBootstrap(){const r=await fetch(API_URL+'?action=getBootstrap&token='+encodeURIComponent(TOKEN)+'&t='+Date.now(),{cache:'no-store'});const text=await r.text();try{return JSON.parse(text)}catch(e){console.error(text);throw new Error('Backend returned HTML, not JSON. Check /exec deployment.')}}
+async function syncNow(silent=false){if(!API_URL||isSyncing)return;if(!TOKEN&&!silent){toast('Sign in first to sync live data');return}try{isSyncing=true;if(!silent)showLoading('Syncing','Loading latest data...');const res=await getBootstrap();if(res.status!=='success')throw new Error(res.message||'Sync failed');applyData(res.data);toast(silent?'Auto synced':'Synced')}catch(e){toast(e.message)}finally{isSyncing=false;if(!silent)hideLoading()}}
+function applyData(data){DB={...emptyDb(),...(data||{})};localStorage.setItem('lee_cache',JSON.stringify(DB));lastFingerprint=fingerprint(DB);localStorage.setItem('lee_fp',lastFingerprint);renderAll()}
+function fingerprint(d){return JSON.stringify({b:d.businesses?.length,s:d.sales?.length,e:d.expenses?.length,m:d.materials?.length,i:d.inventory?.length,p:d.products?.length,l:d.logs?.[0]?.timestamp,u:d.users?.map(x=>[x.email,x.name,x.photo_url,x.last_seen_at])})}
+function startTimers(){clearInterval(syncTimer);clearInterval(heartbeatTimer);heartbeat();heartbeatTimer=setInterval(heartbeat,15000);syncTimer=setInterval(checkIdleSync,3000)}
+async function heartbeat(){if(!API_URL||!TOKEN||isMutating)return;try{const r=await post({action:'heartbeat',token:TOKEN});if(r.status==='success'&&r.users){DB.users=r.users;renderProfile();localStorage.setItem('lee_cache',JSON.stringify(DB))}}catch(e){}}
+async function checkIdleSync(){if(!API_URL||!TOKEN||document.hidden||isSyncing||isMutating)return;if(Date.now()-lastActivity<5000)return;try{const res=await getBootstrap();if(res.status!=='success')return;const fp=fingerprint(res.data);if(fp!==lastFingerprint){if(isModalOpen()){pendingData=res.data;toast('New updates ready; will apply after closing modal')}else{applyData(res.data);toast('New updates synced')}}}catch(e){}}
+function isModalOpen(){return['backendModal','profileModal','formModal'].some(id=>document.getElementById(id).classList.contains('active'))}
+document.addEventListener('mousemove',()=>lastActivity=Date.now(),{passive:true});['click','keydown','input','touchstart'].forEach(ev=>document.addEventListener(ev,()=>lastActivity=Date.now(),{passive:true}));
+function afterModalClose(){if(pendingData&&!isModalOpen()){applyData(pendingData);pendingData=null;toast('Pending updates applied')}}function toggleSidebar(v){document.getElementById('sidebar').classList.toggle('open',v);document.getElementById('overlay').classList.toggle('open',v)}
+function showTab(t){currentTab=t;document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.getElementById('viewDashboard').classList.toggle('hidden',t!=='dashboard');document.getElementById('viewTable').classList.toggle('hidden',t==='dashboard');document.getElementById('pageTitle').textContent=t==='dashboard'?'Dashboard':SCHEMAS[t].title;toggleSidebar(false);if(t!=='dashboard')setupTable();renderAll()}
+function setupTable(){const s=SCHEMAS[currentTab];document.getElementById('tableTitle').textContent=s.title;document.getElementById('tableSub').textContent=s.readOnly?'System activity logs':'Create, edit, delete, export records';document.getElementById('addBtn').classList.toggle('hidden',!!s.readOnly);fillTableBusinessFilter();fillStatusFilter();renderColumnsPanel()}
+function renderAll(){fillBusinessFilter();renderDashboard();if(currentTab!=='dashboard')renderTable();renderProfile()}
+function fillBusinessFilter(){const opts='<option value="ALL">All Businesses</option>'+DB.businesses.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');document.getElementById('businessFilter').innerHTML=opts;}
+function fillTableBusinessFilter(){document.getElementById('tableBusinessFilter').innerHTML='<option value="ALL">All Businesses</option>'+DB.businesses.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('')}
+function fillStatusFilter(){let opts=['ALL'];if(currentTab==='sales')opts=['ALL','Paid','Unpaid','In-process'];else if(['businesses','materials','products'].includes(currentTab))opts=['ALL','Active','Inactive'];else if(currentTab==='expenses')opts=['ALL','Equipment/Tools','Consumables','Service/Fees','Rent','Utilities','Payroll','Other'];else if(currentTab==='inventory')opts=['ALL','IN','OUT','WASTE'];document.getElementById('statusFilter').innerHTML=opts.map(o=>`<option>${esc(o)}</option>`).join('')}
+function selectedBiz(){return document.getElementById('businessFilter').value||'ALL'}function tableBiz(){return document.getElementById('tableBusinessFilter').value||'ALL'}
+function rows(k,global=false){const bid=global?selectedBiz():tableBiz();return (DB[k]||[]).filter(r=>bid==='ALL'||r.business_id===bid||r.id===bid)}
+function renderDashboard(){const sales=rows('sales',true),exp=rows('expenses',true),mat=rows('materials',true);const biz=selectedBiz()==='ALL'?DB.businesses:DB.businesses.filter(b=>b.id===selectedBiz());const ts=sales.reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0),te=exp.reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0),inc=ts-te;set('kpiSales',money(ts));set('kpiExpenses',money(te));set('kpiIncome',money(inc));set('kpiBusinesses',biz.length);set('kpiLowStock',mat.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).length);set('kpiSalesSub',sales.length+' transactions');set('kpiExpensesSub',exp.length+' entries');set('kpiMargin',ts?((inc/ts)*100).toFixed(1)+'% margin':'0.0% margin');renderCharts(biz,sales,exp,ts,te,inc);renderRecentSales(sales);renderLowStock(mat)}
+function renderCharts(biz,sales,exp,ts,te,inc){if(chartBusiness)chartBusiness.destroy();if(chartRoi)chartRoi.destroy();chartBusiness=new Chart(document.getElementById('chartBusiness'),{type:'bar',data:{labels:biz.map(b=>b.name),datasets:[{label:'Sales',data:biz.map(b=>sales.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0)),backgroundColor:'#93c5fd'},{label:'Expenses',data:biz.map(b=>exp.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0)),backgroundColor:'#fb7185'}]},options:{responsive:true,maintainAspectRatio:false}});chartRoi=new Chart(document.getElementById('chartRoi'),{type:'doughnut',data:{labels:['Sales','Expenses','Income'],datasets:[{data:[ts,te,Math.max(inc,0)],backgroundColor:['#38bdf8','#fb7185','#fb923c']}]},options:{responsive:true,maintainAspectRatio:false}})}
+function renderRecentSales(sales){document.getElementById('recentSales').innerHTML='<table class="w-full text-sm"><tbody>'+sales.slice(0,6).map(r=>`<tr><td class="py-3 font-bold">${esc(r.item)}</td><td>${esc(bizName(r.business_id))}</td><td class="text-right font-black">${money(num(r.total_price)||num(r.price)*num(r.qty||1))}</td></tr>`).join('')+'</tbody></table>'||'No sales yet'}
+function renderLowStock(mat){const low=mat.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level));document.getElementById('lowStockList').innerHTML=low.length?low.map(m=>`<div class="flex justify-between py-3 border-b border-slate-100 dark:border-slate-800"><b>${esc(m.name)}</b><span class="font-black text-amber-600">${esc(m.qty_on_hand)} ${esc(m.unit)}</span></div>`).join(''):'<div class="text-slate-500">No low stock items.</div>'}
+function getTableRows(){let r=currentTab==='logs'?(DB.logs||[]):rows(currentTab);const q=(document.getElementById('searchBox').value||'').toLowerCase();const st=document.getElementById('statusFilter').value||'ALL';const df=document.getElementById('dateFrom').value,dt=document.getElementById('dateTo').value;const dateKey=SCHEMAS[currentTab].date;r=r.filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(st==='ALL'||[x.status,x.payment_status,x.type].includes(st))&&(!dateKey||!df||String(x[dateKey])>=df)&&(!dateKey||!dt||String(x[dateKey])<=dt));return r}
+function renderTable(){const s=SCHEMAS[currentTab],r=getTableRows();let headers=Object.keys(r[0]||sample(currentTab)).filter(h=>!['_row'].includes(h));headers=headers.filter(h=>colVis[currentTab]?.[h]!==false);document.getElementById('thead').innerHTML='<tr>'+headers.map(h=>`<th class="px-4 py-4 text-left">${label(h)}</th>`).join('')+(s.readOnly?'':'<th class="px-4 py-4 text-right">Actions</th>')+'</tr>';document.getElementById('tbody').innerHTML=r.map(row=>`<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60">${headers.map(h=>`<td class="px-4 py-4">${cell(h,row[h])}</td>`).join('')}${s.readOnly?'':`<td class="px-4 py-4 text-right"><button class="font-black text-blue-600 mr-3" onclick='openFormById("${esc(row.id)}")'>EDIT</button><button class="font-black text-red-600" onclick='deleteRecord("${esc(row.id)}")'>DELETE</button></td>`}</tr>`).join('')||'<tr><td colspan="99" class="p-10 text-center text-slate-500">No records found.</td></tr>'}
+function sample(k){return{businesses:{id:'',name:'',description:'',status:''},sales:{id:'',business_id:'',sale_date:'',item:'',price:'',qty:'',total_price:'',payment_status:''},expenses:{id:'',business_id:'',expense_date:'',item:'',type:'',price:'',qty:'',total_cost:''},materials:{id:'',business_id:'',name:'',unit:'',qty_on_hand:'',cost_per_unit:'',reorder_level:'',status:''},inventory:{id:'',business_id:'',material_id:'',type:'',qty:'',movement_date:''},products:{id:'',business_id:'',name:'',sku:'',selling_price:'',status:''},logs:{timestamp:'',email:'',action:'',detail:''}}[k]||{}}
+function label(h){return h==='business_id'?'Business':h==='material_id'?'Material':h==='product_id'?'Product':h.replace(/_/g,' ').replace(/\b\w/g,m=>m.toUpperCase())}
+function cell(h,v){if(h==='id')return shortId(v);if(h==='business_id')return esc(bizName(v));if(h==='material_id')return esc(matName(v));if(h==='product_id')return esc(prodName(v));if(['price','total_price','total_cost','cost_per_unit','unit_cost','selling_price'].includes(h))return money(v);return esc(v||'')}
+function renderColumnsPanel(){const p=document.getElementById('columnsPanel'),hs=Object.keys(sample(currentTab));p.innerHTML=hs.map(h=>`<label class="flex gap-2 items-center font-bold"><input type="checkbox" ${colVis[currentTab]?.[h]===false?'':'checked'} onchange="setCol('${h}',this.checked)"> ${label(h)}</label>`).join('')}
+function setCol(h,v){colVis[currentTab]=colVis[currentTab]||{};colVis[currentTab][h]=v;localStorage.setItem('lee_colvis',JSON.stringify(colVis));renderTable()}function toggleColumns(){document.getElementById('columnsPanel').classList.toggle('hidden')}
+function clearFilters(){['searchBox','dateFrom','dateTo'].forEach(id=>document.getElementById(id).value='');document.getElementById('statusFilter').value='ALL';document.getElementById('tableBusinessFilter').value='ALL';renderTable()}
+function openFormById(id){openForm((DB[currentTab]||[]).find(r=>r.id===id))}
+function openForm(row=null){const s=SCHEMAS[currentTab];editingId=row?.id||null;document.getElementById('formTitle').textContent=(editingId?'Edit ':'Add ')+s.title;document.getElementById('recordForm').innerHTML=s.fields.map(f=>field(f,row||{})).join('');document.getElementById('formModal').classList.add('active')}
+function closeForm(){document.getElementById('formModal').classList.remove('active');afterModalClose()}
+function field([k,l,t,req],row){const v=row[k]||'';if(t==='business')return select(k,l,DB.businesses,'name',v,req);if(t==='material')return select(k,l,DB.materials,'name',v,req);if(t==='product')return select(k,l,DB.products,'name',v,req,true);if(t.startsWith('select:'))return `<label class="font-black text-xs text-slate-500">${l}<select name="${k}" ${req?'required':''} class="mt-2 w-full p-3 rounded-2xl border bg-white dark:bg-slate-900">${t.split(':')[1].split(',').map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select></label>`;return `<label class="font-black text-xs text-slate-500">${l}<input name="${k}" type="${t}" value="${esc(v)}" ${req?'required':''} class="mt-2 w-full p-3 rounded-2xl border bg-white dark:bg-slate-900"></label>`}
+function select(k,l,arr,disp,v,req,blank=false){return `<label class="font-black text-xs text-slate-500">${l}<select name="${k}" ${req?'required':''} class="mt-2 w-full p-3 rounded-2xl border bg-white dark:bg-slate-900">${blank?'<option value="">—</option>':''}${arr.map(r=>`<option value="${esc(r.id)}" ${r.id===v?'selected':''}>${esc(r[disp])}</option>`).join('')}</select></label>`}
+async function saveForm(e){e.preventDefault();const rec=Object.fromEntries(new FormData(e.target).entries());const action=editingId?'updateRecord':'createRecord';const backup=JSON.parse(JSON.stringify(DB));const temp={...rec,id:editingId||'TMP-'+Date.now()};if(currentTab==='sales')temp.total_price=num(temp.price)*num(temp.qty||1);if(currentTab==='expenses')temp.total_cost=num(temp.price)*num(temp.qty||1);if(editingId){DB[currentTab]=DB[currentTab].map(r=>r.id===editingId?{...r,...temp}:r)}else{DB[currentTab].unshift(temp)}renderAll();closeForm();try{isMutating=true;const res=await post({action,token:TOKEN,sheet:currentTab,id:editingId,record:rec});if(res.status!=='success')throw new Error(res.message||'Save failed');await syncNow(true);toast('Saved')}catch(err){DB=backup;renderAll();toast('Reverted: '+err.message)}finally{isMutating=false}}
+async function deleteRecord(id){if(!confirm('Delete this record?'))return;const backup=JSON.parse(JSON.stringify(DB));DB[currentTab]=DB[currentTab].filter(r=>r.id!==id);renderAll();try{isMutating=true;const res=await post({action:'deleteRecord',token:TOKEN,sheet:currentTab,id});if(res.status!=='success')throw new Error(res.message||'Delete failed');await syncNow(true);toast('Deleted')}catch(e){DB=backup;renderAll();toast('Reverted: '+e.message)}finally{isMutating=false}}
+function openProfile(){document.getElementById('profileEmail').value=USER?.email||'';document.getElementById('profileName').value=USER?.name||'';document.getElementById('profilePhoto').value=USER?.photo_url||'';previewProfile();renderProfileOnline();document.getElementById('profileModal').classList.add('active')}
+function closeProfile(){document.getElementById('profileModal').classList.remove('active');afterModalClose()}
+function previewProfile(){const url=document.getElementById('profilePhoto').value;renderAvatar('profileBigAvatar',document.getElementById('profileName').value||USER?.name||'Profile',url)}
+async function saveProfile(){try{showLoading('Saving Profile','Updating user settings...');const name=document.getElementById('profileName').value.trim(),photo_url=document.getElementById('profilePhoto').value.trim();const res=await post({action:'updateProfile',token:TOKEN,name,photo_url});if(res.status!=='success')throw new Error(res.message||'Profile save failed');USER=res.user;DB.users=res.users||DB.users;localStorage.setItem('lee_user',JSON.stringify(USER));renderProfile();closeProfile();toast('Profile updated')}catch(e){toast(e.message)}finally{hideLoading()}}
+function renderProfile(){const name=USER?.name||'Profile',photo=USER?.photo_url||'';set('profileNameTop',name);renderAvatar('profileAvatar',name,photo);renderProfileOnline()}
+function renderAvatar(id,name,url){const el=document.getElementById(id);if(!el)return;const init=(name||'PR').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase();el.innerHTML=url?`<img src="${esc(url)}" onerror="this.parentElement.textContent='${init}'"><span class="status-dot"></span>`:`${init}<span class="status-dot"></span>`}
+function renderProfileOnline(){const users=(DB.users||[]).filter(u=>isOnline(u));document.getElementById('onlineBadge').innerHTML=`<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>ONLINE ${users.length?users.length:''}`;document.getElementById('profileOnlineList').innerHTML=users.map(u=>`<div class="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-slate-800 border"><div class="avatar !w-10 !h-10 text-xs">${u.photo_url?`<img src="${esc(u.photo_url)}">`:initials(u.name||u.email)}<span class="status-dot"></span></div><div><b>${esc(u.name||u.email)}</b><div class="text-xs text-slate-500">Online</div></div></div>`).join('')||'<span class="text-slate-500">No users online.</span>'}
+function isOnline(u){const t=new Date(u.last_seen_at||0).getTime();return t&&Date.now()-t<65000}function initials(s){return String(s||'U').split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()}
+function exportCsv(){const r=currentTab==='dashboard'?rows('sales',true):getTableRows();if(!r.length)return toast('No rows to export');const hs=Object.keys(r[0]);const csv=[hs.map(label).join(','),...r.map(x=>hs.map(h=>'"'+String(h==='business_id'?bizName(x[h]):x[h]??'').replace(/"/g,'""')+'"').join(','))].join('\n');download(new Blob([csv],{type:'text/csv'}),'lee-business.csv')}
+function exportPdfReport(){const{jsPDF}=window.jspdf;const doc=new jsPDF('l','mm','a4');doc.setFontSize(18);doc.text('Lee Business Report',14,16);doc.setFontSize(10);doc.text(new Date().toLocaleString(),14,23);const r=currentTab==='dashboard'?rows('sales',true):getTableRows();const hs=Object.keys(r[0]||sample(currentTab)).slice(0,8);doc.autoTable({startY:30,head:[hs.map(label)],body:r.map(x=>hs.map(h=>h==='business_id'?bizName(x[h]):String(x[h]??''))),styles:{fontSize:8},headStyles:{fillColor:[7,59,31]}});doc.save('lee-business-report.pdf')}
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),30000)}
+function toggleTheme(){document.documentElement.classList.toggle('dark');localStorage.setItem('lee_theme',document.documentElement.classList.contains('dark')?'dark':'light');renderDashboard()}if(localStorage.getItem('lee_theme')==='dark')document.documentElement.classList.add('dark')
+function bizName(id){return(DB.businesses.find(b=>b.id===id)||{}).name||'-'}function matName(id){return(DB.materials.find(m=>m.id===id)||{}).name||'-'}function prodName(id){return(DB.products.find(p=>p.id===id)||{}).name||'-'}function shortId(id){return String(id||'').slice(-4).toUpperCase()}function money(n){return'₱'+num(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}function num(v){const n=Number(String(v||0).replace(/[₱,\s]/g,''));return isFinite(n)?n:0}function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function toast(m){const t=document.createElement('div');t.className='toast-item';t.textContent=m;document.getElementById('toast').appendChild(t);setTimeout(()=>t.remove(),3500)}function showLoading(t,m){set('loadingTitle',t);set('loadingText',m);document.getElementById('loading').classList.add('active')}function hideLoading(){document.getElementById('loading').classList.remove('active')}function isAuthenticated(){return !!TOKEN}
+window.addEventListener('DOMContentLoaded',()=>{if(USER)showApp();else renderAll();if(window.google&&google.accounts){}if(API_URL&&USER)openBackend()});
 </script>
+</body></html>
