@@ -31,7 +31,6 @@
       --dark:#020617;
       --shadow:0 18px 48px rgba(16,24,40,.08);
       --shadow2:0 28px 80px rgba(16,24,40,.16);
-      --radius:28px;
     }
 
     *{box-sizing:border-box}
@@ -854,8 +853,6 @@ const GOOGLE_CLIENT_ID = '488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.goo
 const LS = {
   KEY: 'lee_business_connection_key',
   API: 'lee_business_api_url',
-  CACHE: 'lee_business_cache_v2',
-  USER: 'lee_business_last_user',
   COLS: 'lee_business_column_visibility_v2'
 };
 
@@ -966,18 +963,8 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
   bindActivity();
-  loadCachedData();
   loadSavedConnection();
   waitForGoogle(initGoogleAuth);
-
-  const cachedUser = getCachedUser();
-  if (cachedUser) {
-    USER = cachedUser;
-    showAppShell();
-    updateProfileUi();
-    renderAll();
-  }
-
   startHeartbeat();
   startIdleSync();
 }
@@ -1001,27 +988,6 @@ function bindActivity() {
   });
 }
 
-function loadCachedData() {
-  const raw = localStorage.getItem(LS.CACHE);
-  if (!raw || raw === 'undefined') return;
-
-  try {
-    const cached = JSON.parse(raw);
-    if (cached && cached.data) {
-      DB = normalizeDb(cached.data);
-    }
-  } catch (e) {
-    localStorage.removeItem(LS.CACHE);
-  }
-}
-
-function cacheData() {
-  localStorage.setItem(LS.CACHE, JSON.stringify({
-    saved_at: new Date().toISOString(),
-    data: DB
-  }));
-}
-
 function loadSavedConnection() {
   const savedKey = localStorage.getItem(LS.KEY) || '';
   const savedApi = localStorage.getItem(LS.API) || '';
@@ -1036,18 +1002,6 @@ function loadSavedConnection() {
   if (savedKey) {
     API_URL = decodeConnectionKey(savedKey);
     if (API_URL) localStorage.setItem(LS.API, API_URL);
-  }
-}
-
-function getCachedUser() {
-  const raw = localStorage.getItem(LS.USER);
-  if (!raw || raw === 'undefined') return null;
-
-  try {
-    return JSON.parse(raw);
-  } catch (e) {
-    localStorage.removeItem(LS.USER);
-    return null;
   }
 }
 
@@ -1108,14 +1062,11 @@ function handleGoogleCredential(response) {
   const info = parseJwt(TOKEN);
 
   USER = {
-    ...(USER || {}),
-    email: info.email || USER?.email || '',
-    name: info.name || USER?.name || info.email || 'User',
-    picture: info.picture || USER?.picture || '',
-    photo_url: USER?.photo_url || ''
+    email: info.email || '',
+    name: info.name || info.email || 'User',
+    picture: info.picture || '',
+    photo_url: ''
   };
-
-  localStorage.setItem(LS.USER, JSON.stringify(USER));
 
   showAppShell();
   updateProfileUi();
@@ -1185,7 +1136,7 @@ function showAppShell() {
 function logout() {
   TOKEN = '';
   USER = null;
-  localStorage.removeItem(LS.USER);
+  DB = normalizeDb({});
 
   try {
     if (window.google && google.accounts && google.accounts.id) {
@@ -1195,6 +1146,8 @@ function logout() {
 
   document.getElementById('app').classList.add('hidden');
   document.getElementById('login').classList.remove('hidden');
+
+  renderAll();
 
   setTimeout(() => waitForGoogle(initGoogleAuth), 150);
 }
@@ -1294,7 +1247,7 @@ async function reloadData(showOverlay = true) {
 
   try {
     isSyncing = true;
-    if (showOverlay) loading(true, 'Syncing data...');
+    if (showOverlay) loading(true, 'Syncing data from Google Sheets...');
 
     const res = await apiPost({
       action: 'getBootstrap',
@@ -1311,16 +1264,16 @@ async function reloadData(showOverlay = true) {
         ...(USER || {}),
         ...res.user,
         name: USER?.name || res.user.name,
-        email: USER?.email || res.user.email
+        email: USER?.email || res.user.email,
+        picture: USER?.picture || res.user.picture || '',
+        photo_url: res.user.photo_url || USER?.photo_url || ''
       };
-      localStorage.setItem(LS.USER, JSON.stringify(USER));
     }
 
-    cacheData();
     updateProfileUi();
     renderAll();
     setStatus(true);
-    toast('Data synced.', 'success');
+    toast('Data synced from Google Sheets.', 'success');
   } catch (e) {
     setStatus(false, true);
     toast(e.message, 'error');
@@ -1380,9 +1333,8 @@ function startIdleSync() {
           pendingRemoteData = newDb;
         } else {
           DB = newDb;
-          cacheData();
           renderAll();
-          toast('New updates synced.', 'success');
+          toast('New updates synced from Google Sheets.', 'success');
         }
       }
       setStatus(true);
@@ -1394,11 +1346,12 @@ function startIdleSync() {
 
 function applyPendingRemoteData() {
   if (!pendingRemoteData) return;
+
   DB = pendingRemoteData;
   pendingRemoteData = null;
-  cacheData();
+
   renderAll();
-  toast('Pending updates applied.', 'success');
+  toast('Pending Google Sheets updates applied.', 'success');
 }
 
 function normalizeDb(data) {
@@ -1838,8 +1791,11 @@ async function saveForm(e) {
   const record = Object.fromEntries(new FormData(e.target).entries());
   const action = editingId ? 'updateRecord' : 'createRecord';
 
-  if (editingId) record.id = editingId;
-  else record.id = makeId();
+  if (editingId) {
+    record.id = editingId;
+  } else {
+    record.id = makeId();
+  }
 
   if (currentTab === 'sales') record.total_price = num(record.price) * num(record.qty || 1);
   if (currentTab === 'expenses') record.total_cost = num(record.price) * num(record.qty || 1);
@@ -1848,25 +1804,37 @@ async function saveForm(e) {
 
   if (editingId) {
     const idx = DB[schema.key].findIndex(r => r.id === editingId);
-    if (idx >= 0) DB[schema.key][idx] = { ...DB[schema.key][idx], ...record };
+    if (idx >= 0) {
+      DB[schema.key][idx] = { ...DB[schema.key][idx], ...record };
+    }
   } else {
     DB[schema.key].unshift(record);
   }
 
   closeModal('formModal');
   renderAll();
+  toast('Saving to Google Sheets...', '');
 
   try {
     isMutating = true;
-    const res = await apiPost({ action, token: TOKEN, sheet: currentTab, id: editingId, record, user: USER });
+
+    const res = await apiPost({
+      action,
+      token: TOKEN,
+      sheet: currentTab,
+      id: editingId,
+      record,
+      user: USER
+    });
+
     if (res.status !== 'success') throw new Error(res.message || 'Save failed.');
 
-    toast('Saved successfully.', 'success');
+    toast('Saved to Google Sheets.', 'success');
     await reloadData(false);
   } catch (err) {
     DB[schema.key] = before;
     renderAll();
-    toast(err.message, 'error');
+    toast('Save failed. UI changes were reverted. ' + err.message, 'error');
   } finally {
     isMutating = false;
   }
@@ -1879,31 +1847,43 @@ async function deleteRecord(id) {
   }
 
   const schema = SCHEMAS[currentTab];
+
   if (!schema || schema.readOnly) return;
+
   if (!confirm('Delete this record? This will be logged.')) return;
 
   const before = JSON.parse(JSON.stringify(DB[schema.key] || []));
+
   DB[schema.key] = DB[schema.key].filter(r => r.id !== id);
   renderAll();
+  toast('Deleting from Google Sheets...', '');
 
   try {
     isMutating = true;
-    const res = await apiPost({ action: 'deleteRecord', token: TOKEN, sheet: currentTab, id, user: USER });
+
+    const res = await apiPost({
+      action: 'deleteRecord',
+      token: TOKEN,
+      sheet: currentTab,
+      id,
+      user: USER
+    });
+
     if (res.status !== 'success') throw new Error(res.message || 'Delete failed.');
 
-    toast('Deleted successfully.', 'success');
+    toast('Deleted from Google Sheets.', 'success');
     await reloadData(false);
   } catch (err) {
     DB[schema.key] = before;
     renderAll();
-    toast(err.message, 'error');
+    toast('Delete failed. UI changes were reverted. ' + err.message, 'error');
   } finally {
     isMutating = false;
   }
 }
 
 function updateProfileUi() {
-  const user = USER || getCachedUser() || {};
+  const user = USER || {};
   const name = user.name || user.email || 'Profile';
   const email = user.email || '';
   const photo = user.photo_url || user.picture || '';
@@ -1935,8 +1915,6 @@ function updateProfileUi() {
 }
 
 function openProfile() {
-  if (!USER) USER = getCachedUser();
-
   if (!USER) {
     toast('Please sign in first.', 'error');
     return;
@@ -1962,20 +1940,33 @@ function previewProfilePhoto() {
 }
 
 async function saveProfile() {
+  if (!TOKEN) {
+    requireGoogleTokenThen(() => saveProfile());
+    return;
+  }
+
   const photoUrl = document.getElementById('profilePhotoUrl').value.trim();
 
   USER = { ...(USER || {}), photo_url: photoUrl };
-  localStorage.setItem(LS.USER, JSON.stringify(USER));
   updateProfileUi();
+
+  toast('Saving profile to Google Sheets...', '');
 
   try {
     if (API_URL && TOKEN) {
-      const res = await apiPost({ action: 'updateProfile', token: TOKEN, user: USER, photo_url: photoUrl });
+      const res = await apiPost({
+        action: 'updateProfile',
+        token: TOKEN,
+        user: USER,
+        photo_url: photoUrl
+      });
+
       if (res.status !== 'success') throw new Error(res.message || 'Profile update failed.');
     }
 
     toast('Profile updated.', 'success');
     closeModal('profileModal');
+    await reloadData(false);
   } catch (e) {
     toast(e.message, 'error');
   }
