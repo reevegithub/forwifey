@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=0.8,maximum-scale=0.8">
 <title>Lee Business</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -385,7 +385,7 @@ function renderChat(scrollBottom=false){const box=document.getElementById('chatB
 function renderChatOnlineUsers(){const t=document.getElementById('chatOnlineUsers');if(!t)return;const users=(DB.users||[]).filter(u=>u.online||u.last_seen_at);t.innerHTML=users.map(u=>`<div style="display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:18px;padding:12px;background:#fff"><div class="avatar" style="width:38px;height:38px">${u.photo_url?`<img src="${escAttr(u.photo_url)}" style="display:block;width:100%;height:100%;object-fit:cover">`:`<span>${esc(initials(u.name||u.email))}</span>`}</div><div><div style="font-weight:900">${esc(u.name||u.email)}</div><div style="font-size:12px;color:#667085;font-weight:700">${esc(u.role||'user')}</div></div></div>`).join('')||'<div style="color:#667085;font-weight:800">No online users.</div>'}
 
 function normalizeDb(data){return{businesses:Array.isArray(data.businesses)?data.businesses:[],sales:Array.isArray(data.sales)?data.sales:[],expenses:Array.isArray(data.expenses)?data.expenses:[],materials:Array.isArray(data.materials)?data.materials:[],inventory:Array.isArray(data.inventory)?data.inventory:[],products:Array.isArray(data.products)?data.products:[],logs:Array.isArray(data.logs)?data.logs:[],users:Array.isArray(data.users)?data.users:[],chat:Array.isArray(data.chat)?data.chat:[]}}
-function hasRealRecordSetChanged(oldDb,newDb){return recordSetSignature(oldDb)!==recordSetSignature(newDb)}
+function hasRealRecordSetChanged(oldDb,newDb){const oldSig=recordSetSignature(oldDb),newSig=recordSetSignature(newDb);if(oldSig!==newSig){const oldRecords=JSON.parse(oldSig),newRecords=JSON.parse(newSig);for(const key in oldRecords){if(key!=='logs'&amp;&amp;key!=='users'&amp;&amp;key!=='chat'&amp;&amp;oldRecords[key].join(',')!==newRecords[key].join(','))return true}}return false}
 function recordSetSignature(db){const p={};SYNC_RECORD_TABLES.forEach(k=>p[k]=(Array.isArray(db?.[k])?db[k]:[]).map(r=>String(r.id||'').trim()).filter(Boolean).sort());return JSON.stringify(p)}
 function selectedBusinessGlobal(){return document.getElementById('businessFilter')?.value||'ALL'}
 function selectedBusinessTable(){return document.getElementById('tableBusinessFilter')?.value||selectedBusinessGlobal()}
