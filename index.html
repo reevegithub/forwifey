@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ROI Monitoring Pro</title>
+  <title>Lee Business</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <script>
@@ -17,12 +19,12 @@
       theme: {
         extend: {
           colors: {
-            brand: { 50:'#eff6ff', 100:'#dbeafe', 600:'#2563eb', 700:'#1d4ed8', 900:'#0f172a' },
+            lee: { 50:'#f0fdf4', 100:'#dcfce7', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 900:'#052e16' },
             ink: '#0f172a'
           },
           boxShadow: {
-            soft: '0 18px 50px rgba(15,23,42,.08)',
-            card: '0 10px 25px rgba(15,23,42,.06)'
+            soft: '0 20px 60px rgba(15,23,42,.10)',
+            card: '0 12px 30px rgba(15,23,42,.07)'
           }
         }
       }
@@ -33,52 +35,54 @@
     body{font-family:Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
     *{transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s,transform .15s}
     ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}.dark ::-webkit-scrollbar-thumb{background:#475569}
-    .glass{background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border:1px solid rgba(226,232,240,.9)}
-    .dark .glass{background:rgba(15,23,42,.78);border-color:rgba(51,65,85,.9)}
-    .tab.active{background:#0f172a;color:#fff;border-color:#0f172a;box-shadow:0 10px 25px rgba(15,23,42,.14)}
-    .dark .tab.active{background:#2563eb;border-color:#2563eb}
+    .glass{background:rgba(255,255,255,.86);backdrop-filter:blur(16px);border:1px solid rgba(226,232,240,.92)}
+    .dark .glass{background:rgba(15,23,42,.80);border-color:rgba(51,65,85,.95)}
+    .nav-btn.active{background:#052e16;color:#fff;border-color:#052e16;box-shadow:0 16px 30px rgba(5,46,22,.18)}
+    .dark .nav-btn.active{background:#16a34a;border-color:#16a34a;color:#fff}
     .modal{display:none}.modal.show{display:flex}
     th{white-space:nowrap}.pill{border-radius:999px;padding:4px 10px;font-size:11px;font-weight:900;display:inline-flex;align-items:center;gap:6px}
-    .side-link.active{background:#eff6ff;color:#1d4ed8}.dark .side-link.active{background:rgba(37,99,235,.18);color:#93c5fd}
     .toast{animation:toastIn .22s ease-out}@keyframes toastIn{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
-    .skeleton{background:linear-gradient(90deg,#e2e8f0 25%,#f8fafc 37%,#e2e8f0 63%);background-size:400% 100%;animation:skeleton 1.4s ease infinite}.dark .skeleton{background:linear-gradient(90deg,#1e293b 25%,#334155 37%,#1e293b 63%);background-size:400% 100%}@keyframes skeleton{0%{background-position:100% 50%}100%{background-position:0 50%}}
+    .saving-dot{height:8px;width:8px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulseDot 1.2s infinite}@keyframes pulseDot{70%{box-shadow:0 0 0 10px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+    .row-pending{position:relative;opacity:.78}.row-pending:after{content:'syncing';position:absolute;right:12px;top:8px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:900;text-transform:uppercase}
   </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 overflow-hidden">
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,#dcfce7,transparent_32%),radial-gradient(circle_at_bottom_right,#dbeafe,transparent_30%)] dark:bg-[radial-gradient(circle_at_top_left,#064e3b,transparent_30%),radial-gradient(circle_at_bottom_right,#172554,transparent_30%)]"></div>
 
-  <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_bottom_right,#dcfce7,transparent_28%)] dark:bg-[radial-gradient(circle_at_top_left,#1e3a8a,transparent_28%),radial-gradient(circle_at_bottom_right,#064e3b,transparent_28%)]"></div>
-
-  <!-- Loading overlay for login, sync, CRUD -->
-  <div id="loadingOverlay" class="hidden fixed inset-0 z-[9999] bg-slate-950/55 backdrop-blur-sm items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 px-8 py-7 text-center min-w-[280px]">
-      <div class="mx-auto mb-4 h-14 w-14 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-blue-600 animate-spin"></div>
-      <div id="loadingText" class="font-black text-slate-900 dark:text-white">Processing...</div>
-      <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">Please wait, saving changes safely.</div>
+  <div id="busyOverlay" class="hidden fixed inset-0 z-[9999] bg-slate-950/50 backdrop-blur-sm items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl border border-slate-200 dark:border-slate-700 px-8 py-7 text-center min-w-[290px]">
+      <div class="mx-auto mb-4 h-14 w-14 rounded-full border-4 border-slate-200 dark:border-slate-700 border-t-lee-600 animate-spin"></div>
+      <div id="busyText" class="font-black text-slate-950 dark:text-white">Loading...</div>
+      <div class="text-xs text-slate-500 mt-1">Preparing Lee Business securely.</div>
     </div>
   </div>
 
-  <!-- Login -->
-  <div id="login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
+  <div id="syncBanner" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[9998] rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft px-4 py-3 items-center gap-3">
+    <div class="h-5 w-5 rounded-full border-2 border-slate-200 border-t-lee-600 animate-spin"></div>
+    <div><div id="syncTitle" class="text-sm font-black">Saving changes...</div><div class="text-[10px] uppercase tracking-widest text-slate-400 font-black">Optimistic preview active</div></div>
+  </div>
+
+  <div id="login" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/92 backdrop-blur-xl">
     <div class="w-full max-w-5xl grid lg:grid-cols-2 overflow-hidden rounded-[2rem] bg-white dark:bg-slate-900 shadow-2xl border border-white/20">
       <div class="hidden lg:flex flex-col justify-between p-10 bg-slate-950 text-white relative overflow-hidden">
-        <div class="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-600/30 blur-3xl"></div>
-        <div class="absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
+        <div class="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-lee-600/35 blur-3xl"></div>
+        <div class="absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl"></div>
         <div class="relative">
-          <div class="h-14 w-14 rounded-2xl bg-white/10 flex items-center justify-center text-3xl mb-8">📈</div>
-          <h1 class="text-4xl font-black tracking-tight leading-tight">ROI Monitoring<br>Business Command Center</h1>
-          <p class="mt-4 text-slate-300 leading-relaxed">Sales, expenses, materials, inventory movements, and audit logs in one professional Google Sheets powered dashboard.</p>
+          <div class="h-16 w-16 rounded-3xl bg-white/10 flex items-center justify-center text-4xl mb-8">📈</div>
+          <h1 class="text-5xl font-black tracking-tight leading-tight">Lee Business</h1>
+          <p class="mt-4 text-slate-300 leading-relaxed">Fast sales, expenses, inventory, and materials dashboard powered by Google Sheets with professional audit-ready CRUD.</p>
         </div>
         <div class="relative grid grid-cols-3 gap-3 text-center">
-          <div class="rounded-2xl bg-white/10 p-4"><div class="text-2xl font-black">CRUD</div><div class="text-[10px] uppercase tracking-widest text-slate-300">Logged</div></div>
-          <div class="rounded-2xl bg-white/10 p-4"><div class="text-2xl font-black">5K</div><div class="text-[10px] uppercase tracking-widest text-slate-300">Log Cap</div></div>
-          <div class="rounded-2xl bg-white/10 p-4"><div class="text-2xl font-black">SSO</div><div class="text-[10px] uppercase tracking-widest text-slate-300">Google</div></div>
+          <div class="rounded-2xl bg-white/10 p-4"><div class="text-2xl font-black">Fast</div><div class="text-[10px] uppercase tracking-widest text-slate-300">Preview</div></div>
+          <div class="rounded-2xl bg-white/10 p-4"><div class="text-2xl font-black">CSV</div><div class="text-[10px] uppercase tracking-widest text-slate-300">Export</div></div>
+          <div class="rounded-2xl bg-white/10 p-4"><div class="text-2xl font-black">PDF</div><div class="text-[10px] uppercase tracking-widest text-slate-300">Reports</div></div>
         </div>
       </div>
       <div class="p-8 md:p-12 flex flex-col justify-center">
         <div class="mb-8">
-          <div class="lg:hidden h-16 w-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-3xl mb-5">📊</div>
+          <div class="lg:hidden h-16 w-16 rounded-2xl bg-lee-50 dark:bg-lee-900/30 flex items-center justify-center text-3xl mb-5">📊</div>
           <h2 class="text-3xl font-black text-slate-950 dark:text-white">Welcome back</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Sign in once. If Google session is still active, this page will auto-select your account.</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Google Sign-In will reuse your active browser session when possible.</p>
         </div>
         <div id="g_id_onload"
              data-client_id="488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com"
@@ -89,21 +93,20 @@
         <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left" data-width="320"></div>
         <p id="loginMsg" class="text-xs text-red-600 mt-4 font-bold"></p>
         <div class="mt-8 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-          Your Apps Script <b>/exec</b> URL is not hardcoded here. It is connected through encrypted settings and saved in this browser after first setup.
+          Backend URL is not hardcoded. The encrypted Apps Script <b>/exec</b> connection is saved in this browser after first setup, similar to your previous system.
         </div>
       </div>
     </div>
   </div>
 
-  <!-- App Shell -->
   <div id="app" class="hidden h-screen flex overflow-hidden">
-    <aside class="hidden xl:flex w-72 glass border-r border-slate-200 dark:border-slate-800 flex-col shrink-0">
+    <aside class="hidden xl:flex w-76 min-w-72 glass border-r border-slate-200 dark:border-slate-800 flex-col shrink-0">
       <div class="p-6 border-b border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3">
-          <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-white text-2xl shadow-card">📈</div>
+          <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-lee-600 to-blue-500 flex items-center justify-center text-white text-2xl shadow-card">L</div>
           <div>
-            <h1 class="font-black text-lg leading-none">ROI Pro</h1>
-            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Google Sheets DB</p>
+            <h1 class="font-black text-xl leading-none">Lee Business</h1>
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Command Center</p>
           </div>
         </div>
       </div>
@@ -120,11 +123,13 @@
           <button onclick="toggleMobileNav()" class="xl:hidden h-10 w-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-black">☰</button>
           <div class="min-w-0">
             <h2 id="pageHeading" class="text-lg md:text-2xl font-black tracking-tight truncate">Dashboard</h2>
-            <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Business performance and inventory intelligence</p>
+            <p class="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Sales, expenses, inventory, and ROI analytics</p>
           </div>
           <div class="ml-auto flex items-center gap-2">
-            <select id="businessFilter" class="hidden md:block border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-3 py-2 text-sm font-bold max-w-[220px]" onchange="renderAll()"></select>
-            <button onclick="reloadData()" class="rounded-2xl bg-slate-950 dark:bg-blue-600 text-white px-4 py-2 text-xs font-black shadow-card">SYNC</button>
+            <select id="businessFilter" class="hidden md:block border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-3 py-2 text-sm font-bold max-w-[240px]" onchange="renderAll()"></select>
+            <button onclick="reloadData(true)" class="rounded-2xl bg-slate-950 dark:bg-lee-600 text-white px-4 py-2 text-xs font-black shadow-card">SYNC</button>
+            <button onclick="exportCurrentCsv()" class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-black">CSV</button>
+            <button onclick="exportPdfReport()" class="rounded-2xl bg-lee-600 text-white px-4 py-2 text-xs font-black shadow-card">PDF</button>
             <button onclick="toggleTheme()" class="rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-black">◐</button>
           </div>
         </div>
@@ -134,7 +139,6 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-4 md:p-6">
-        <!-- Dashboard -->
         <section id="dashboard" class="view space-y-6">
           <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <div class="glass rounded-3xl p-5 shadow-card border-l-4 border-blue-500"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Sales</p><h2 id="kpiSales" class="text-2xl font-black mt-2">₱0</h2><p id="kpiSalesSub" class="text-xs text-slate-500 mt-1">0 transactions</p></div>
@@ -157,7 +161,7 @@
 
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
             <div class="glass rounded-3xl p-5 shadow-card xl:col-span-2">
-              <div class="flex items-center justify-between mb-4"><h3 class="font-black text-lg">Recent Sales</h3><button onclick="showTab('sales')" class="text-xs font-black text-blue-600">VIEW ALL</button></div>
+              <div class="flex items-center justify-between mb-4"><h3 class="font-black text-lg">Recent Sales</h3><button onclick="showTab('sales')" class="text-xs font-black text-lee-600">VIEW ALL</button></div>
               <div id="recentSales" class="overflow-x-auto"></div>
             </div>
             <div class="glass rounded-3xl p-5 shadow-card">
@@ -167,17 +171,24 @@
           </div>
         </section>
 
-        <!-- Data Table -->
         <section id="tableView" class="view hidden glass rounded-3xl shadow-card overflow-hidden">
-          <div class="p-4 md:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-3 md:items-center">
-            <div>
-              <h2 id="tableTitle" class="font-black text-xl">Table</h2>
-              <p id="tableSubtitle" class="text-xs text-slate-500 mt-1">Manage records with complete audit logs.</p>
+          <div class="p-4 md:p-5 border-b border-slate-200 dark:border-slate-800 space-y-4">
+            <div class="flex flex-col md:flex-row gap-3 md:items-center">
+              <div><h2 id="tableTitle" class="font-black text-xl">Table</h2><p id="tableSubtitle" class="text-xs text-slate-500 mt-1">Manage records with fast optimistic previews.</p></div>
+              <div class="md:ml-auto flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                <input id="searchBox" oninput="renderCurrentTable()" placeholder="Search records..." class="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-4 py-2 text-sm w-full md:w-72 outline-none focus:ring-2 ring-lee-500">
+                <button onclick="toggleColumnMenu(event)" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-2xl text-xs font-black">COLUMNS</button>
+                <button onclick="exportCurrentCsv()" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-2xl text-xs font-black">EXPORT CSV</button>
+                <button id="addBtn" onclick="openForm()" class="bg-lee-600 hover:bg-lee-700 text-white px-5 py-2 rounded-2xl text-xs font-black shadow-card">ADD NEW</button>
+              </div>
             </div>
-            <div class="md:ml-auto flex flex-col md:flex-row gap-2 w-full md:w-auto">
-              <input id="searchBox" oninput="renderCurrentTable()" placeholder="Search records..." class="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-4 py-2 text-sm w-full md:w-80 outline-none focus:ring-2 ring-blue-500">
-              <button id="addBtn" onclick="openForm()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-2xl text-xs font-black shadow-card">ADD NEW</button>
+            <div class="grid md:grid-cols-4 gap-3">
+              <select id="statusFilter" onchange="renderCurrentTable()" class="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-4 py-2 text-sm font-bold"><option value="ALL">All Status / Types</option></select>
+              <input id="dateFrom" onchange="renderCurrentTable()" type="date" class="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-4 py-2 text-sm font-bold">
+              <input id="dateTo" onchange="renderCurrentTable()" type="date" class="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-2xl px-4 py-2 text-sm font-bold">
+              <button onclick="clearTableFilters()" class="rounded-2xl bg-slate-100 dark:bg-slate-800 px-4 py-2 text-xs font-black">CLEAR FILTERS</button>
             </div>
+            <div id="columnMenu" class="hidden rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4"><div class="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-3">Column Visibility</div><div id="columnList" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2"></div></div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-sm">
@@ -185,73 +196,51 @@
               <tbody id="tbody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
             </table>
           </div>
-          <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-slate-500"><span id="tableCount">0 records</span><span>All create, update, delete actions are logged.</span></div>
+          <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-2 md:items-center justify-between text-xs font-bold text-slate-500"><span id="tableCount">0 records</span><span>Business IDs are shortened to 4 characters for display. Full IDs are kept internally.</span></div>
         </section>
       </main>
     </div>
   </div>
 
-  <!-- Mobile nav -->
   <div id="mobileNav" class="hidden fixed inset-0 z-[80] bg-slate-950/50 backdrop-blur-sm xl:hidden" onclick="toggleMobileNav()">
     <div class="w-80 max-w-[85vw] h-full glass p-4" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between mb-4"><div class="font-black text-lg">Menu</div><button onclick="toggleMobileNav()" class="text-2xl">×</button></div>
+      <div class="flex items-center justify-between mb-4"><div class="font-black text-lg">Lee Business</div><button onclick="toggleMobileNav()" class="text-2xl">×</button></div>
       <div id="mobileSideNav" class="space-y-1"></div>
     </div>
   </div>
 
-  <!-- Settings Modal -->
   <div id="settingsModal" class="modal fixed inset-0 z-[90] bg-slate-950/60 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center">
-        <div><h3 class="font-black text-2xl">Backend Connection</h3><p class="text-xs text-slate-500 mt-1">Encrypted Apps Script /exec URL. Saved in this browser.</p></div>
-        <button onclick="closeSettings()" class="ml-auto text-2xl h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">×</button>
-      </div>
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center"><div><h3 class="font-black text-2xl">Backend Connection</h3><p class="text-xs text-slate-500 mt-1">Encrypted Apps Script /exec URL. Saved in this browser.</p></div><button onclick="closeSettings()" class="ml-auto text-2xl h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">×</button></div>
       <div class="p-6 space-y-4">
-        <div class="rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-4 text-sm text-blue-900 dark:text-blue-100 leading-relaxed">
-          First setup only: enter your encrypted URL and key, then click Connect. After successful connection, this browser remembers the connection and can auto-connect on next load. To avoid typing the key again, the decrypted URL is cached locally like your old project pattern.
-        </div>
-        <div>
-          <label class="text-xs font-black uppercase text-slate-500">Encrypted Apps Script /exec URL</label>
-          <textarea id="encryptedApiUrl" rows="4" class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-xs font-mono outline-none focus:ring-2 ring-blue-500" placeholder="Paste encrypted URL here"></textarea>
-        </div>
-        <div class="grid md:grid-cols-2 gap-4">
-          <div><label class="text-xs font-black uppercase text-slate-500">Decryption Key</label><input id="decryptKey" type="password" class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-blue-500" placeholder="Enter secret key"></div>
-          <div><label class="text-xs font-black uppercase text-slate-500">Connection Cache</label><select id="cacheMode" class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none"><option value="decrypted">Remember connection, no key next reload</option><option value="encrypted">Save encrypted only, require key next reload</option></select></div>
-        </div>
+        <div class="rounded-2xl bg-lee-50 dark:bg-lee-900/20 border border-lee-100 dark:border-lee-800 p-4 text-sm text-lee-900 dark:text-lee-100 leading-relaxed">First setup only: enter encrypted URL and key, then Connect. Use cache mode to remember the decrypted connection so you do not need to type the key every reload.</div>
+        <div><label class="text-xs font-black uppercase text-slate-500">Encrypted Apps Script /exec URL</label><textarea id="encryptedApiUrl" rows="4" class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-xs font-mono outline-none focus:ring-2 ring-lee-500" placeholder="Paste encrypted URL here"></textarea></div>
+        <div class="grid md:grid-cols-2 gap-4"><div><label class="text-xs font-black uppercase text-slate-500">Decryption Key</label><input id="decryptKey" type="password" class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-lee-500" placeholder="Enter secret key"></div><div><label class="text-xs font-black uppercase text-slate-500">Connection Cache</label><select id="cacheMode" class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none"><option value="decrypted">Remember connection, no key next reload</option><option value="encrypted">Save encrypted only, require key next reload</option></select></div></div>
         <p id="settingsMsg" class="text-xs text-red-600 font-bold"></p>
-        <div class="flex flex-col md:flex-row gap-2 justify-end">
-          <button onclick="forgetBackend()" class="px-5 py-3 rounded-2xl bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 text-xs font-black">FORGET CONNECTION</button>
-          <button onclick="encryptRawUrl()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-black">ENCRYPT URL</button>
-          <button onclick="saveSettings()" class="px-5 py-3 rounded-2xl bg-slate-950 dark:bg-blue-600 text-white text-xs font-black shadow-card">CONNECT</button>
-        </div>
-        <div id="encryptOutputBox" class="hidden">
-          <label class="text-xs font-black uppercase text-slate-500">Encrypted Output</label>
-          <div id="encryptOutput" class="mt-1 p-4 rounded-2xl bg-slate-950 text-green-300 text-xs font-mono break-all"></div>
-          <button onclick="copyEncryptedOutput()" class="mt-2 px-4 py-2 rounded-2xl bg-emerald-600 text-white text-xs font-black">COPY</button>
-        </div>
+        <div class="flex flex-col md:flex-row gap-2 justify-end"><button onclick="forgetBackend()" class="px-5 py-3 rounded-2xl bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300 text-xs font-black">FORGET CONNECTION</button><button onclick="encryptRawUrl()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-black">ENCRYPT URL</button><button onclick="saveSettings(false)" class="px-5 py-3 rounded-2xl bg-slate-950 dark:bg-lee-600 text-white text-xs font-black shadow-card">CONNECT</button></div>
+        <div id="encryptOutputBox" class="hidden"><label class="text-xs font-black uppercase text-slate-500">Encrypted Output</label><div id="encryptOutput" class="mt-1 p-4 rounded-2xl bg-slate-950 text-green-300 text-xs font-mono break-all"></div><button onclick="copyEncryptedOutput()" class="mt-2 px-4 py-2 rounded-2xl bg-lee-600 text-white text-xs font-black">COPY</button></div>
       </div>
     </div>
   </div>
 
-  <!-- Form Modal -->
   <div id="formModal" class="modal fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur-sm items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 dark:border-slate-700">
-      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center"><div><h3 id="formTitle" class="font-black text-2xl">Form</h3><p class="text-xs text-slate-500 mt-1">Changes are saved to Google Sheets and logged.</p></div><button onclick="closeForm()" class="ml-auto text-2xl h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">×</button></div>
+      <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center"><div><h3 id="formTitle" class="font-black text-2xl">Form</h3><p class="text-xs text-slate-500 mt-1">Preview updates instantly; backend sync happens after you save.</p></div><button onclick="closeForm()" class="ml-auto text-2xl h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">×</button></div>
       <form id="recordForm" class="p-6 overflow-y-auto grid md:grid-cols-2 gap-4" onsubmit="saveForm(event)"></form>
-      <div class="p-5 border-t border-slate-200 dark:border-slate-800 flex gap-2 justify-end"><button onclick="closeForm()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-black">CANCEL</button><button onclick="document.getElementById('recordForm').requestSubmit()" class="px-5 py-3 rounded-2xl bg-slate-950 dark:bg-blue-600 text-white text-xs font-black shadow-card">SAVE RECORD</button></div>
+      <div class="p-5 border-t border-slate-200 dark:border-slate-800 flex gap-2 justify-end"><button onclick="closeForm()" class="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-black">CANCEL</button><button onclick="document.getElementById('recordForm').requestSubmit()" class="px-5 py-3 rounded-2xl bg-slate-950 dark:bg-lee-600 text-white text-xs font-black shadow-card">SAVE RECORD</button></div>
     </div>
   </div>
 
   <div id="toastWrap" class="fixed bottom-4 right-4 z-[10000] space-y-2"></div>
 
 <script>
-const GOOGLE_CLIENT_ID = '488546802727-vste9himgedh7ed6acg4b23uh1vqf1b9.apps.googleusercontent.com';
 const STORAGE = {
-  encryptedApi: 'roi_pro_encrypted_api_url',
-  decryptedApi: 'roi_pro_decrypted_api_url_cache',
-  cacheMode: 'roi_pro_cache_mode',
-  theme: 'roi_pro_theme',
-  lastUser: 'roi_pro_last_user'
+  encryptedApi: 'lee_business_encrypted_api_url',
+  decryptedApi: 'lee_business_decrypted_api_url_cache',
+  cacheMode: 'lee_business_cache_mode',
+  theme: 'lee_business_theme',
+  columns: 'lee_business_columns_',
+  lastUser: 'lee_business_last_user'
 };
 let API_URL = localStorage.getItem(STORAGE.decryptedApi) || '';
 let TOKEN = '';
@@ -260,53 +249,56 @@ let DB = null;
 let current = { sheet: 'businesses', id: null };
 let chartBusiness = null;
 let chartRoi = null;
+let activeColumns = {};
+let pendingRows = new Set();
 
 const NAV = [
   ['dashboard','Dashboard','📊'], ['businesses','Businesses','🏢'], ['sales','Sales','💰'], ['expenses','Expenses','🧾'], ['materials','Materials','🧱'], ['inventory','Inventory','📦'], ['products','Products','🛍️'], ['logs','Audit Logs','🕒']
 ];
 const SCHEMAS = {
   businesses:{title:'Businesses',key:'businesses',fields:[['name','Business Name','text',true],['description','Description','text',false],['status','Status','select:Active,Inactive',true]]},
-  sales:{title:'Sales',key:'sales',fields:[['business_id','Business','business',true],['sale_date','Date','date',true],['item','Item','text',true],['product_id','Product','product',false],['price','Price','number',true],['qty','Qty','number',true],['customer','Customer','text',false],['payment_status','Payment Status','select:Paid,Unpaid,In-process',true],['remarks','Remarks','text',false]]},
-  expenses:{title:'Expenses',key:'expenses',fields:[['business_id','Business','business',true],['expense_date','Date','date',true],['item','Item','text',true],['type','Type','select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other',true],['vendor','Vendor','text',false],['price','Price','number',true],['qty','Qty','number',true],['remarks','Remarks','text',false]]},
+  sales:{title:'Sales',key:'sales',dateKey:'sale_date',fields:[['business_id','Business','business',true],['sale_date','Date','date',true],['item','Item','text',true],['product_id','Product','product',false],['price','Price','number',true],['qty','Qty','number',true],['customer','Customer','text',false],['payment_status','Payment Status','select:Paid,Unpaid,In-process',true],['remarks','Remarks','text',false]]},
+  expenses:{title:'Expenses',key:'expenses',dateKey:'expense_date',fields:[['business_id','Business','business',true],['expense_date','Date','date',true],['item','Item','text',true],['type','Type','select:Equipment/Tools,Consumables,Service/Fees,Rent,Utilities,Payroll,Other',true],['vendor','Vendor','text',false],['price','Price','number',true],['qty','Qty','number',true],['remarks','Remarks','text',false]]},
   materials:{title:'Materials',key:'materials',fields:[['business_id','Business','business',true],['name','Material Name','text',true],['unit','Unit','text',true],['qty_on_hand','Qty On Hand','number',true],['cost_per_unit','Cost per Unit','number',true],['reorder_level','Reorder Level','number',false],['status','Status','select:Active,Inactive',true]]},
-  inventory:{title:'Inventory Movements',key:'inventory',fields:[['business_id','Business','business',true],['material_id','Material','material',true],['type','Type','select:IN,OUT,WASTE',true],['qty','Qty','number',true],['unit_cost','Unit Cost','number',false],['reference','Reference','text',false],['remarks','Remarks','text',false],['movement_date','Movement Date','date',true]]},
+  inventory:{title:'Inventory Movements',key:'inventory',dateKey:'movement_date',fields:[['business_id','Business','business',true],['material_id','Material','material',true],['type','Type','select:IN,OUT,WASTE',true],['qty','Qty','number',true],['unit_cost','Unit Cost','number',false],['reference','Reference','text',false],['remarks','Remarks','text',false],['movement_date','Movement Date','date',true]]},
   products:{title:'Products',key:'products',fields:[['business_id','Business','business',true],['name','Product Name','text',true],['sku','SKU','text',false],['selling_price','Selling Price','number',true],['target_margin_percent','Target Margin %','number',false],['status','Status','select:Active,Inactive',true]]},
-  logs:{title:'Audit Logs',key:'logs',readOnly:true,fields:[]}
+  logs:{title:'Audit Logs',key:'logs',readOnly:true,dateKey:'timestamp',fields:[]}
 };
 
 window.addEventListener('load', () => {
   buildNav();
-  const theme = localStorage.getItem(STORAGE.theme); if(theme === 'dark') document.documentElement.classList.add('dark');
+  if(localStorage.getItem(STORAGE.theme)==='dark') document.documentElement.classList.add('dark');
   document.getElementById('encryptedApiUrl').value = localStorage.getItem(STORAGE.encryptedApi) || '';
   document.getElementById('cacheMode').value = localStorage.getItem(STORAGE.cacheMode) || 'decrypted';
 });
 
 function handleGoogleLogin(response){
   TOKEN = response.credential;
-  showLoading('Signing in...');
+  showBusy('Signing in...');
   const info = parseJwt(TOKEN);
   USER = { email: info.email || '', name: info.name || '' };
   localStorage.setItem(STORAGE.lastUser, JSON.stringify(USER));
   document.getElementById('login').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   if(API_URL){
-    saveSettings(true).finally(hideLoading);
-  } else {
-    hideLoading();
+    verifyAndLoad().finally(hideBusy);
+  }else{
+    hideBusy();
     openSettings();
   }
 }
 function parseJwt(token){ try { return JSON.parse(atob(token.split('.')[1])); } catch(e){ return {}; } }
-function showLoading(text='Processing...'){ document.getElementById('loadingText').innerText=text; document.getElementById('loadingOverlay').classList.remove('hidden'); document.getElementById('loadingOverlay').classList.add('flex'); }
-function hideLoading(){ document.getElementById('loadingOverlay').classList.add('hidden'); document.getElementById('loadingOverlay').classList.remove('flex'); }
-function toast(msg,type='success'){ const wrap=document.getElementById('toastWrap'); const el=document.createElement('div'); el.className=`toast rounded-2xl px-4 py-3 shadow-2xl text-sm font-bold border ${type==='error'?'bg-red-50 text-red-700 border-red-100':'bg-white text-slate-800 border-slate-200'}`; el.innerText=msg; wrap.appendChild(el); setTimeout(()=>el.remove(),3500); }
-
-function buildNav(){ const html=NAV.map(([id,label,icon])=>`<button class="side-link ${id==='dashboard'?'active':''} w-full rounded-2xl px-4 py-3 text-sm font-black flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800" onclick="showTab('${id}')"><span>${icon}</span><span>${label}</span></button>`).join(''); document.getElementById('sideNav').innerHTML=html; document.getElementById('mobileSideNav').innerHTML=html; }
-function markNav(name){ document.querySelectorAll('.side-link').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.side-link').forEach(b=>{ if(b.getAttribute('onclick')===`showTab('${name}')`) b.classList.add('active'); }); }
+function showBusy(text='Loading...'){ document.getElementById('busyText').innerText=text; document.getElementById('busyOverlay').classList.remove('hidden'); document.getElementById('busyOverlay').classList.add('flex'); }
+function hideBusy(){ document.getElementById('busyOverlay').classList.add('hidden'); document.getElementById('busyOverlay').classList.remove('flex'); }
+function showSync(text='Saving changes...'){ document.getElementById('syncTitle').innerText=text; document.getElementById('syncBanner').classList.remove('hidden'); document.getElementById('syncBanner').classList.add('flex'); }
+function hideSync(){ document.getElementById('syncBanner').classList.add('hidden'); document.getElementById('syncBanner').classList.remove('flex'); }
+function toast(msg,type='success'){ const wrap=document.getElementById('toastWrap'); const el=document.createElement('div'); el.className=`toast rounded-2xl px-4 py-3 shadow-2xl text-sm font-bold border ${type==='error'?'bg-red-50 text-red-700 border-red-100':'bg-white text-slate-800 border-slate-200'}`; el.innerText=msg; wrap.appendChild(el); setTimeout(()=>el.remove(),3800); }
+function buildNav(){ const html=NAV.map(([id,label,icon])=>`<button class="nav-btn ${id==='dashboard'?'active':''} w-full rounded-2xl px-4 py-3 text-sm font-black flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent" onclick="showTab('${id}')"><span>${icon}</span><span>${label}</span></button>`).join(''); document.getElementById('sideNav').innerHTML=html; document.getElementById('mobileSideNav').innerHTML=html; }
+function markNav(name){ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b=>{ if(b.getAttribute('onclick')===`showTab('${name}')`) b.classList.add('active'); }); }
 function toggleMobileNav(){ document.getElementById('mobileNav').classList.toggle('hidden'); }
 function toggleTheme(){ document.documentElement.classList.toggle('dark'); localStorage.setItem(STORAGE.theme, document.documentElement.classList.contains('dark')?'dark':'light'); renderDashboard(); }
-
 function signOut(){ TOKEN=''; USER=null; DB=null; document.getElementById('app').classList.add('hidden'); document.getElementById('login').classList.remove('hidden'); if(window.google?.accounts?.id) google.accounts.id.disableAutoSelect(); }
+
 function openSettings(){ document.getElementById('settingsMsg').innerText=''; document.getElementById('settingsModal').classList.add('show'); }
 function closeSettings(){ document.getElementById('settingsModal').classList.remove('show'); }
 function encryptRawUrl(){ const raw=prompt('Paste your raw Apps Script Web App /exec URL:'); if(!raw) return; const key=document.getElementById('decryptKey').value.trim(); if(!key) return alert('Enter a decryption key first.'); if(!isValidAppsScriptExecUrl(raw)) return alert('Invalid Apps Script Web App URL. It must start with https://script.google.com/macros/s/ and end with /exec'); const encrypted=CryptoJS.AES.encrypt(raw,key).toString(); document.getElementById('encryptOutputBox').classList.remove('hidden'); document.getElementById('encryptOutput').innerText=encrypted; document.getElementById('encryptedApiUrl').value=encrypted; }
@@ -314,73 +306,97 @@ function copyEncryptedOutput(){ const text=document.getElementById('encryptOutpu
 function decryptUrl(encrypted,key){ try{ return CryptoJS.AES.decrypt(encrypted,key).toString(CryptoJS.enc.Utf8); }catch(e){ return ''; } }
 function isValidAppsScriptExecUrl(url){ return String(url||'').startsWith('https://script.google.com/macros/s/') && String(url||'').endsWith('/exec'); }
 function forgetBackend(){ localStorage.removeItem(STORAGE.encryptedApi); localStorage.removeItem(STORAGE.decryptedApi); API_URL=''; document.getElementById('encryptedApiUrl').value=''; toast('Backend connection removed.'); }
-
 async function saveSettings(silent=false){
+  const msg=document.getElementById('settingsMsg'); msg.innerText='';
   const encrypted=document.getElementById('encryptedApiUrl').value.trim();
   const key=document.getElementById('decryptKey').value.trim();
   const cacheMode=document.getElementById('cacheMode').value;
-  const msg=document.getElementById('settingsMsg'); msg.innerText='';
-  if(!TOKEN){ msg.innerText='Please sign in with Google first.'; return; }
   if(!API_URL){
-    if(!encrypted || !key){ if(!silent) msg.innerText='Encrypted URL and key are required for first setup.'; return; }
+    if(!encrypted) { msg.innerText='Encrypted URL is required.'; return; }
     const decrypted=decryptUrl(encrypted,key);
-    if(!decrypted || !isValidAppsScriptExecUrl(decrypted)){ msg.innerText='Invalid encrypted URL or wrong decryption key.'; return; }
+    if(!decrypted || !isValidAppsScriptExecUrl(decrypted)){ msg.innerText='Wrong key or invalid encrypted URL.'; return; }
     API_URL=decrypted;
   }
-  showLoading('Connecting backend...');
-  try{
-    const res=await post({action:'verifyToken', token:TOKEN});
-    if(res.status!=='success') throw new Error(res.message || 'Google verification failed.');
-    USER=res.user || {email:res.email || USER?.email || '', name:res.name || USER?.name || ''};
-    if(encrypted) localStorage.setItem(STORAGE.encryptedApi, encrypted);
-    localStorage.setItem(STORAGE.cacheMode, cacheMode);
-    if(cacheMode==='decrypted') localStorage.setItem(STORAGE.decryptedApi, API_URL); else localStorage.removeItem(STORAGE.decryptedApi);
-    closeSettings();
-    await reloadData();
-    toast('Connected successfully.');
-  }catch(err){ msg.innerText=err.message; if(!silent) toast(err.message,'error'); }
-  finally{ hideLoading(); }
+  localStorage.setItem(STORAGE.cacheMode,cacheMode);
+  if(encrypted) localStorage.setItem(STORAGE.encryptedApi,encrypted);
+  if(cacheMode==='decrypted') localStorage.setItem(STORAGE.decryptedApi,API_URL); else localStorage.removeItem(STORAGE.decryptedApi);
+  if(!silent) showBusy('Connecting...');
+  try{ await verifyAndLoad(); closeSettings(); toast('Backend connected.'); }
+  catch(err){ msg.innerText=err.message; toast(err.message,'error'); }
+  finally{ if(!silent) hideBusy(); }
 }
-async function post(payload){ if(!API_URL) throw new Error('Backend is not connected.'); const r=await fetch(API_URL,{method:'POST',body:JSON.stringify(payload)}); const text=await r.text(); try{return JSON.parse(text);}catch(e){ console.error('Backend returned:',text); throw new Error('Backend did not return JSON. Check Apps Script /exec deployment and access.'); } }
-async function reloadData(){ if(!API_URL){ openSettings(); return; } showLoading('Syncing dashboard...'); try{ const res=await post({action:'getBootstrap', token:TOKEN}); if(res.status!=='success') throw new Error(res.message || 'Failed to load data'); DB=res.data || emptyDB(); fillBusinessFilter(); renderAll(); }catch(err){ toast(err.message,'error'); openSettings(); } finally{ hideLoading(); } }
-function emptyDB(){ return {businesses:[],sales:[],expenses:[],materials:[],inventory:[],products:[],logs:[]}; }
+async function verifyAndLoad(){ const res=await post({action:'verifyToken',token:TOKEN}); if(res.status!=='success') throw new Error(res.message||'Google verification failed.'); USER=res.user||{email:res.email||USER?.email||'',name:res.name||USER?.name||''}; await reloadData(false); }
+async function post(payload){ if(!API_URL) throw new Error('Backend is not connected.'); const r=await fetch(API_URL,{method:'POST',body:JSON.stringify(payload)}); const text=await r.text(); try{return JSON.parse(text);}catch(e){console.error(text);throw new Error('Backend returned non-JSON. Check /exec URL and Web App access.');} }
+async function reloadData(show=true){ if(!API_URL){openSettings();return;} if(show) showBusy('Syncing data...'); try{ const res=await post({action:'getBootstrap',token:TOKEN}); if(res.status!=='success') throw new Error(res.message||'Failed to load data.'); DB=normalizeDb(res.data||{}); fillBusinessFilters(); renderAll(); if(show) toast('Data synced.'); }catch(err){ toast(err.message,'error'); if(show) openSettings(); }finally{ if(show) hideBusy(); } }
+function normalizeDb(data){ return { businesses:data.businesses||[], sales:data.sales||[], expenses:data.expenses||[], materials:data.materials||[], inventory:data.inventory||data.inventoryMovements||[], products:data.products||[], logs:data.logs||[] }; }
 
-function fillBusinessFilter(){ const opts='<option value="ALL">All Businesses</option>'+(DB.businesses||[]).map(b=>`<option value="${esc(b.id)}">${html(b.name)}</option>`).join(''); const a=document.getElementById('businessFilter'), m=document.getElementById('businessFilterMobile'); const old=a.value||'ALL'; a.innerHTML=opts; m.innerHTML=opts; a.value=[...a.options].some(o=>o.value===old)?old:'ALL'; m.value=a.value; }
+function fillBusinessFilters(){ const opts='<option value="ALL">All Businesses</option>'+ (DB.businesses||[]).map(b=>`<option value="${esc(b.id)}">${html(b.name)} ${shortId(b.id)}</option>`).join(''); const a=document.getElementById('businessFilter'), b=document.getElementById('businessFilterMobile'); const old=a.value||'ALL'; a.innerHTML=opts; b.innerHTML=opts; a.value=[...a.options].some(o=>o.value===old)?old:'ALL'; b.value=a.value; }
 function syncMobileBusinessFilter(){ document.getElementById('businessFilter').value=document.getElementById('businessFilterMobile').value; renderAll(); }
 function selectedBusiness(){ return document.getElementById('businessFilter').value || 'ALL'; }
-function frows(key){ if(!DB?.[key]) return []; const bid=selectedBusiness(); return DB[key].filter(r=>bid==='ALL'||!r.business_id||r.business_id===bid||r.id===bid); }
+function frows(key){ if(!DB||!DB[key]) return []; const bid=selectedBusiness(); return DB[key].filter(r=>bid==='ALL'||!r.business_id||r.business_id===bid||r.id===bid); }
 function money(n){ return '₱'+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function num(v){ const n=Number(String(v||0).replace(/[₱,\s]/g,'')); return isFinite(n)?n:0; }
+function shortId(id){ const s=String(id||''); return s ? '#'+s.slice(-4).toUpperCase() : ''; }
 function businessName(id){ return (DB.businesses||[]).find(b=>b.id===id)?.name || '-'; }
 function materialName(id){ return (DB.materials||[]).find(m=>m.id===id)?.name || '-'; }
 function productName(id){ return (DB.products||[]).find(p=>p.id===id)?.name || '-'; }
+function currentDateKey(){ return SCHEMAS[current.sheet]?.dateKey || ''; }
 
-function renderAll(){ if(!DB) return; document.getElementById('businessFilterMobile').value=document.getElementById('businessFilter').value; renderDashboard(); if(!document.getElementById('tableView').classList.contains('hidden')) renderCurrentTable(); }
-function renderDashboard(){
-  if(!DB) return; const sales=frows('sales'), expenses=frows('expenses'), materials=frows('materials'); const businesses=selectedBusiness()==='ALL'?(DB.businesses||[]):(DB.businesses||[]).filter(b=>b.id===selectedBusiness());
-  const ts=sales.reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0); const te=expenses.reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0); const income=ts-te; const margin=ts>0?(income/ts*100):0;
-  document.getElementById('kpiSales').innerText=money(ts); document.getElementById('kpiExpenses').innerText=money(te); document.getElementById('kpiIncome').innerText=money(income); document.getElementById('kpiBusinesses').innerText=businesses.length; document.getElementById('kpiLowStock').innerText=materials.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).length; document.getElementById('kpiSalesSub').innerText=`${sales.length} transactions`; document.getElementById('kpiExpensesSub').innerText=`${expenses.length} entries`; document.getElementById('kpiMargin').innerText=`${margin.toFixed(1)}% margin`;
-  const labels=businesses.map(b=>b.name); const salesData=businesses.map(b=>sales.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0)); const expenseData=businesses.map(b=>expenses.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0));
+function renderAll(){ if(!DB) return; renderDashboard(); if(!document.getElementById('tableView').classList.contains('hidden')) renderCurrentTable(); }
+function getStats(){ const sales=frows('sales'), expenses=frows('expenses'), materials=frows('materials'), businesses=selectedBusiness()==='ALL'?DB.businesses:DB.businesses.filter(b=>b.id===selectedBusiness()); const ts=sales.reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0); const te=expenses.reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0); const income=ts-te; return {sales,expenses,materials,businesses,totalSales:ts,totalExpenses:te,income,margin:ts?(income/ts)*100:0,low:materials.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level))}; }
+function renderDashboard(){ if(!DB) return; const s=getStats(); document.getElementById('kpiSales').innerText=money(s.totalSales); document.getElementById('kpiExpenses').innerText=money(s.totalExpenses); document.getElementById('kpiIncome').innerText=money(s.income); document.getElementById('kpiBusinesses').innerText=s.businesses.length; document.getElementById('kpiLowStock').innerText=s.low.length; document.getElementById('kpiSalesSub').innerText=`${s.sales.length} transactions`; document.getElementById('kpiExpensesSub').innerText=`${s.expenses.length} entries`; document.getElementById('kpiMargin').innerText=`${s.margin.toFixed(1)}% margin`;
+  const labels=s.businesses.map(b=>b.name); const salesData=s.businesses.map(b=>s.sales.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0)); const expenseData=s.businesses.map(b=>s.expenses.filter(r=>r.business_id===b.id).reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0));
   if(chartBusiness) chartBusiness.destroy(); chartBusiness=new Chart(document.getElementById('chartBusiness'),{type:'bar',data:{labels,datasets:[{label:'Sales',data:salesData,borderRadius:10},{label:'Expenses',data:expenseData,borderRadius:10}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}}});
-  if(chartRoi) chartRoi.destroy(); chartRoi=new Chart(document.getElementById('chartRoi'),{type:'doughnut',data:{labels:['Sales','Expenses','Income'],datasets:[{data:[ts,te,Math.max(income,0)],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
-  renderRecentSales(sales); renderLowStock(materials);
+  if(chartRoi) chartRoi.destroy(); chartRoi=new Chart(document.getElementById('chartRoi'),{type:'doughnut',data:{labels:['Sales','Expenses','Income'],datasets:[{data:[s.totalSales,s.totalExpenses,Math.max(s.income,0)],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+  renderRecentSales(s.sales); renderLowStock(s.low);
 }
 function renderRecentSales(sales){ const rows=[...sales].slice(-8).reverse(); document.getElementById('recentSales').innerHTML=`<table class="w-full text-sm"><thead class="text-[10px] uppercase text-slate-400"><tr><th class="text-left py-2">Date</th><th class="text-left py-2">Business</th><th class="text-left py-2">Item</th><th class="text-right py-2">Total</th></tr></thead><tbody>${rows.map(r=>`<tr class="border-t border-slate-100 dark:border-slate-800"><td class="py-3 text-slate-500">${html(r.sale_date||'')}</td><td class="py-3 font-bold">${html(businessName(r.business_id))}</td><td class="py-3">${html(r.item||'')}</td><td class="py-3 text-right font-black">${money(num(r.total_price)||num(r.price)*num(r.qty||1))}</td></tr>`).join('')||'<tr><td class="py-8 text-center text-slate-400" colspan="4">No sales yet.</td></tr>'}</tbody></table>`; }
-function renderLowStock(materials){ const low=materials.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).slice(0,8); document.getElementById('lowStockList').innerHTML=low.map(m=>`<div class="rounded-2xl border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/10 p-4"><div class="font-black">${html(m.name)}</div><div class="text-xs text-slate-500 mt-1">${html(businessName(m.business_id))}</div><div class="mt-2 text-sm"><b>${num(m.qty_on_hand)}</b> ${html(m.unit||'')} left • reorder at ${num(m.reorder_level)}</div></div>`).join('')||'<div class="text-sm text-slate-500">No low stock items.</div>'; }
+function renderLowStock(low){ document.getElementById('lowStockList').innerHTML=low.slice(0,8).map(m=>`<div class="rounded-2xl border border-amber-100 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/10 p-4"><div class="font-black">${html(m.name)}</div><div class="text-xs text-slate-500 mt-1">${html(businessName(m.business_id))} ${shortId(m.business_id)}</div><div class="mt-2 text-sm"><b>${num(m.qty_on_hand)}</b> ${html(m.unit||'')} left • reorder at ${num(m.reorder_level)}</div></div>`).join('')||'<div class="text-sm text-slate-500">No low stock items.</div>'; }
 
-function showTab(name, btn=null){ markNav(name); if(document.getElementById('mobileNav')&&!document.getElementById('mobileNav').classList.contains('hidden')) toggleMobileNav(); document.getElementById('pageHeading').innerText=NAV.find(n=>n[0]===name)?.[1]||'Dashboard'; if(name==='dashboard'){document.getElementById('dashboard').classList.remove('hidden'); document.getElementById('tableView').classList.add('hidden'); renderDashboard(); return;} document.getElementById('dashboard').classList.add('hidden'); document.getElementById('tableView').classList.remove('hidden'); current.sheet=name; renderCurrentTable(); }
-function renderCurrentTable(){ if(!DB) return; const schema=SCHEMAS[current.sheet]; document.getElementById('tableTitle').innerText=schema.title; document.getElementById('tableSubtitle').innerText=schema.readOnly?'View system access and CRUD history.':'Create, edit, and delete records. All actions are logged.'; document.getElementById('addBtn').classList.toggle('hidden',!!schema.readOnly); const rows=current.sheet==='logs'?(DB.logs||[]):frows(schema.key); const q=document.getElementById('searchBox').value.toLowerCase(); const filtered=rows.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)); const headers=Object.keys(filtered[0]||sampleHeaders(schema.key)); document.getElementById('tableCount').innerText=`${filtered.length} records`; document.getElementById('thead').innerHTML='<tr>'+headers.map(h=>`<th class="px-4 py-4 text-left">${html(labelize(h))}</th>`).join('')+(!schema.readOnly?'<th class="px-4 py-4 text-right">Actions</th>':'')+'</tr>'; document.getElementById('tbody').innerHTML=filtered.map(r=>rowHtml(headers,r,schema)).join('')||'<tr><td class="p-10 text-center text-slate-400" colspan="99">No records found.</td></tr>'; }
-function rowHtml(headers,r,schema){ const encoded=esc(JSON.stringify(r)); return `<tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">${headers.map(h=>`<td class="px-4 py-4 align-top">${formatCell(h,r[h])}</td>`).join('')}${!schema.readOnly?`<td class="px-4 py-4 text-right whitespace-nowrap"><button class="text-blue-700 dark:text-blue-300 font-black text-xs mr-3" onclick="openFormFromJson('${encoded}')">EDIT</button><button class="text-red-700 dark:text-red-300 font-black text-xs" onclick="deleteRecord('${esc(r.id)}')">DELETE</button></td>`:''}</tr>`; }
-function sampleHeaders(key){ return {businesses:{name:'',status:''},sales:{sale_date:'',business_id:'',item:'',price:'',qty:'',total_price:'',payment_status:''},expenses:{expense_date:'',business_id:'',item:'',type:'',total_cost:''},materials:{business_id:'',name:'',qty_on_hand:'',cost_per_unit:'',reorder_level:''},inventory:{movement_date:'',business_id:'',material_id:'',type:'',qty:''},products:{business_id:'',name:'',selling_price:'',status:''},logs:{timestamp:'',email:'',action:'',detail:''}}[key]||{}; }
+function showTab(name){ markNav(name); if(document.getElementById('mobileNav')&&!document.getElementById('mobileNav').classList.contains('hidden')) toggleMobileNav(); document.getElementById('pageHeading').innerText=NAV.find(n=>n[0]===name)?.[1]||'Dashboard'; if(name==='dashboard'){document.getElementById('dashboard').classList.remove('hidden'); document.getElementById('tableView').classList.add('hidden'); renderDashboard(); return;} document.getElementById('dashboard').classList.add('hidden'); document.getElementById('tableView').classList.remove('hidden'); current.sheet=name; resetTableControlsForSheet(); renderCurrentTable(); }
+function resetTableControlsForSheet(){ document.getElementById('searchBox').value=''; document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value=''; loadColumnVisibility(); populateStatusFilter(); }
+function loadColumnVisibility(){ const saved=JSON.parse(localStorage.getItem(STORAGE.columns+current.sheet)||'{}'); activeColumns=saved; }
+function saveColumnVisibility(){ localStorage.setItem(STORAGE.columns+current.sheet,JSON.stringify(activeColumns)); }
+function toggleColumnMenu(e){ if(e) e.stopPropagation(); document.getElementById('columnMenu').classList.toggle('hidden'); renderColumnList(); }
+function renderColumnList(headers=null){ headers=headers||getCurrentHeaders(); const list=document.getElementById('columnList'); list.innerHTML=headers.map(h=>{ const checked=activeColumns[h]!==false; return `<label class="flex items-center gap-2 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2"><input type="checkbox" ${checked?'checked':''} onchange="setColumn('${esc(h)}',this.checked)"><span>${html(labelize(h))}</span></label>`; }).join(''); }
+function setColumn(h,val){ activeColumns[unescapeHtml(h)]=val; saveColumnVisibility(); renderCurrentTable(); }
+function getCurrentHeaders(){ const schema=SCHEMAS[current.sheet]; const rows=current.sheet==='logs'?(DB.logs||[]):frows(schema.key); return Object.keys(rows[0]||sampleHeaders(schema.key)); }
+function populateStatusFilter(){ const schema=SCHEMAS[current.sheet]; const rows=current.sheet==='logs'?(DB.logs||[]):frows(schema.key); const vals=[...new Set(rows.map(r=>r.status||r.payment_status||r.type||r.action).filter(Boolean))].sort(); const sel=document.getElementById('statusFilter'); sel.innerHTML='<option value="ALL">All Status / Types</option>'+vals.map(v=>`<option value="${esc(v)}">${html(v)}</option>`).join(''); }
+function clearTableFilters(){ document.getElementById('searchBox').value=''; document.getElementById('statusFilter').value='ALL'; document.getElementById('dateFrom').value=''; document.getElementById('dateTo').value=''; renderCurrentTable(); }
+function filteredRowsForTable(){ const schema=SCHEMAS[current.sheet]; let rows=current.sheet==='logs'?(DB.logs||[]):frows(schema.key); const q=document.getElementById('searchBox').value.toLowerCase(); const status=document.getElementById('statusFilter').value; const from=document.getElementById('dateFrom').value; const to=document.getElementById('dateTo').value; const dateKey=currentDateKey(); rows=rows.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)); if(status && status!=='ALL') rows=rows.filter(r=>(r.status||r.payment_status||r.type||r.action||'')===status); if(dateKey && from) rows=rows.filter(r=>String(r[dateKey]||'')>=from); if(dateKey && to) rows=rows.filter(r=>String(r[dateKey]||'')<=to); return rows; }
+function renderCurrentTable(){ if(!DB) return; const schema=SCHEMAS[current.sheet]; document.getElementById('tableTitle').innerText=schema.title; document.getElementById('tableSubtitle').innerText=schema.readOnly?'View system access and CRUD history.':'Create, edit, delete, filter, export, and preview updates instantly.'; document.getElementById('addBtn').classList.toggle('hidden',!!schema.readOnly); const filtered=filteredRowsForTable(); const allHeaders=Object.keys(filtered[0]||sampleHeaders(schema.key)); const headers=allHeaders.filter(h=>activeColumns[h]!==false); document.getElementById('tableCount').innerText=`${filtered.length} records`; renderColumnList(allHeaders); document.getElementById('thead').innerHTML='<tr>'+headers.map(h=>`<th class="px-4 py-4 text-left">${html(labelize(h))}</th>`).join('')+(!schema.readOnly?'<th class="px-4 py-4 text-right">Actions</th>':'')+'</tr>'; document.getElementById('tbody').innerHTML=filtered.map(r=>rowHtml(headers,r,schema)).join('')||'<tr><td class="p-10 text-center text-slate-400" colspan="99">No records found.</td></tr>'; }
+function rowHtml(headers,r,schema){ const encoded=esc(JSON.stringify(r)); const pending=pendingRows.has(r.id); return `<tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 ${pending?'row-pending':''}">${headers.map(h=>`<td class="px-4 py-4 align-top">${formatCell(h,r[h])}</td>`).join('')}${!schema.readOnly?`<td class="px-4 py-4 text-right whitespace-nowrap"><button class="text-blue-700 dark:text-blue-300 font-black text-xs mr-3" onclick="openFormFromJson('${encoded}')">EDIT</button><button class="text-red-700 dark:text-red-300 font-black text-xs" onclick="deleteRecord('${esc(r.id)}')">DELETE</button></td>`:''}</tr>`; }
+function sampleHeaders(key){ return {businesses:{id:'',name:'',status:''},sales:{id:'',sale_date:'',business_id:'',item:'',price:'',qty:'',total_price:'',payment_status:''},expenses:{id:'',expense_date:'',business_id:'',item:'',type:'',total_cost:''},materials:{id:'',business_id:'',name:'',qty_on_hand:'',cost_per_unit:'',reorder_level:''},inventory:{id:'',movement_date:'',business_id:'',material_id:'',type:'',qty:''},products:{id:'',business_id:'',name:'',selling_price:'',status:''},logs:{timestamp:'',email:'',action:'',detail:''}}[key]||{}; }
 function labelize(s){ return String(s||'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
-function formatCell(h,v){ if(h.includes('business_id')) return `<span class="font-bold">${html(businessName(v))}</span>`; if(h==='material_id') return html(materialName(v)); if(h==='product_id') return html(productName(v)); if(['price','total_price','total_cost','cost_per_unit','unit_cost','selling_price'].includes(h)) return `<span class="font-black">${money(v)}</span>`; if(['status','payment_status','type'].includes(h)) return `<span class="pill bg-slate-100 dark:bg-slate-800">${html(v||'-')}</span>`; return html(v||''); }
+function formatCell(h,v){ if(h==='id') return `<span class="font-black text-slate-500">${shortId(v)}</span>`; if(h==='business_id') return `<span class="font-bold">${html(businessName(v))}</span><div class="text-[10px] text-slate-400 font-black">${shortId(v)}</div>`; if(h==='material_id') return html(materialName(v)); if(h==='product_id') return html(productName(v)); if(['price','total_price','total_cost','cost_per_unit','unit_cost','selling_price'].includes(h)) return `<span class="font-black">${money(v)}</span>`; if(['status','payment_status','type','action'].includes(h)) return `<span class="pill bg-slate-100 dark:bg-slate-800">${html(v||'-')}</span>`; return html(v||''); }
 function openFormFromJson(json){ try{ openForm(JSON.parse(unescapeHtml(json))); }catch(e){ toast('Unable to open record.','error'); } }
 function openForm(row=null){ const schema=SCHEMAS[current.sheet]; current.id=row?.id||null; document.getElementById('formTitle').innerText=(current.id?'Edit ':'Add ')+schema.title; document.getElementById('recordForm').innerHTML=schema.fields.map(([key,label,type,req])=>fieldHtml(key,label,type,req,row||{})).join(''); document.getElementById('formModal').classList.add('show'); }
 function closeForm(){ document.getElementById('formModal').classList.remove('show'); }
-function fieldHtml(key,label,type,req,row){ const val=row[key]||''; if(type==='business') return selectField(key,label,DB.businesses||[],'name',val,req); if(type==='material') return selectField(key,label,DB.materials||[],'name',val,req); if(type==='product') return selectField(key,label,DB.products||[],'name',val,req,true); if(type.startsWith('select:')) return `<label class="text-xs font-black uppercase text-slate-500">${html(label)}<select name="${esc(key)}" ${req?'required':''} class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-blue-500">${type.split(':')[1].split(',').map(o=>`<option value="${esc(o)}" ${o===val?'selected':''}>${html(o)}</option>`).join('')}</select></label>`; return `<label class="text-xs font-black uppercase text-slate-500">${html(label)}<input name="${esc(key)}" type="${esc(type)}" value="${esc(val)}" ${req?'required':''} class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-blue-500"></label>`; }
-function selectField(key,label,rows,display,val,req,allowBlank=false){ return `<label class="text-xs font-black uppercase text-slate-500">${html(label)}<select name="${esc(key)}" ${req?'required':''} class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-blue-500">${allowBlank?'<option value="">—</option>':''}${rows.map(r=>`<option value="${esc(r.id)}" ${r.id===val?'selected':''}>${html(r[display])}</option>`).join('')}</select></label>`; }
-async function saveForm(e){ e.preventDefault(); const record=Object.fromEntries(new FormData(e.target).entries()); const action=current.id?'updateRecord':'createRecord'; showLoading(current.id?'Updating record...':'Creating record...'); try{ const res=await post({action,token:TOKEN,sheet:current.sheet,id:current.id,record}); if(res.status!=='success') throw new Error(res.message||'Save failed'); closeForm(); await reloadData(); renderCurrentTable(); toast('Record saved.'); }catch(err){ toast(err.message,'error'); }finally{ hideLoading(); } }
-async function deleteRecord(id){ if(!confirm('Delete this record? This will be logged.')) return; showLoading('Deleting record...'); try{ const res=await post({action:'deleteRecord',token:TOKEN,sheet:current.sheet,id}); if(res.status!=='success') throw new Error(res.message||'Delete failed'); await reloadData(); renderCurrentTable(); toast('Record deleted.'); }catch(err){ toast(err.message,'error'); }finally{ hideLoading(); } }
+function fieldHtml(key,label,type,req,row){ const val=row[key]||''; if(type==='business') return selectField(key,label,DB.businesses||[],'name',val,req); if(type==='material') return selectField(key,label,DB.materials||[],'name',val,req); if(type==='product') return selectField(key,label,DB.products||[],'name',val,req,true); if(type.startsWith('select:')) return `<label class="text-xs font-black uppercase text-slate-500">${html(label)}<select name="${esc(key)}" ${req?'required':''} class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-lee-500">${type.split(':')[1].split(',').map(o=>`<option value="${esc(o)}" ${o===val?'selected':''}>${html(o)}</option>`).join('')}</select></label>`; return `<label class="text-xs font-black uppercase text-slate-500">${html(label)}<input name="${esc(key)}" type="${esc(type)}" value="${esc(val)}" ${req?'required':''} class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-lee-500"></label>`; }
+function selectField(key,label,rows,display,val,req,allowBlank=false){ return `<label class="text-xs font-black uppercase text-slate-500">${html(label)}<select name="${esc(key)}" ${req?'required':''} class="mt-1 w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 ring-lee-500">${allowBlank?'<option value="">—</option>':''}${rows.map(r=>`<option value="${esc(r.id)}" ${r.id===val?'selected':''}>${html(r[display])} ${shortId(r.id)}</option>`).join('')}</select></label>`; }
+
+function calculateDerived(sheet, record){ const r={...record}; if(sheet==='sales') r.total_price=String(num(r.price)*num(r.qty||1)); if(sheet==='expenses') r.total_cost=String(num(r.price)*num(r.qty||1)); return r; }
+function makeTempId(){ return 'tmp_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8); }
+function applyLocalCreate(sheet, record){ const key=SCHEMAS[sheet].key; const optimistic={...calculateDerived(sheet,record),id:makeTempId(),created_at:new Date().toISOString(),_optimistic:true}; DB[key]=[...(DB[key]||[]),optimistic]; pendingRows.add(optimistic.id); return optimistic; }
+function applyLocalUpdate(sheet,id,record){ const key=SCHEMAS[sheet].key; const arr=DB[key]||[]; const idx=arr.findIndex(r=>r.id===id); if(idx<0) return null; const old={...arr[idx]}; arr[idx]={...arr[idx],...calculateDerived(sheet,record),updated_at:new Date().toISOString(),_optimistic:true}; pendingRows.add(id); return old; }
+function applyLocalDelete(sheet,id){ const key=SCHEMAS[sheet].key; const arr=DB[key]||[]; const idx=arr.findIndex(r=>r.id===id); if(idx<0) return null; const old=arr[idx]; DB[key]=arr.filter(r=>r.id!==id); return old; }
+function commitOptimistic(tempOrId, serverRecord=null){ pendingRows.delete(tempOrId); for(const key of Object.keys(DB)){ const idx=(DB[key]||[]).findIndex(r=>r.id===tempOrId); if(idx>=0){ if(serverRecord && serverRecord.id){ DB[key][idx]={...DB[key][idx],...serverRecord,_optimistic:false}; } else { DB[key][idx]._optimistic=false; } } } }
+function revertCreate(sheet,tempId){ const key=SCHEMAS[sheet].key; DB[key]=(DB[key]||[]).filter(r=>r.id!==tempId); pendingRows.delete(tempId); }
+function revertUpdate(sheet,id,old){ const key=SCHEMAS[sheet].key; const idx=(DB[key]||[]).findIndex(r=>r.id===id); if(idx>=0 && old) DB[key][idx]=old; pendingRows.delete(id); }
+function revertDelete(sheet,old){ const key=SCHEMAS[sheet].key; if(old) DB[key]=[...(DB[key]||[]),old]; }
+async function saveForm(e){ e.preventDefault(); const record=Object.fromEntries(new FormData(e.target).entries()); const sheet=current.sheet; const action=current.id?'updateRecord':'createRecord'; closeForm(); let temp=null, old=null; if(current.id){ old=applyLocalUpdate(sheet,current.id,record); temp={id:current.id}; } else { temp=applyLocalCreate(sheet,record); } renderAll(); showSync(current.id?'Updating in backend...':'Creating in backend...'); try{ const res=await post({action,token:TOKEN,sheet,id:current.id,record}); if(res.status!=='success') throw new Error(res.message||'Save failed'); commitOptimistic(temp.id,res.record); toast('Record saved.'); setTimeout(()=>reloadData(false),350); }catch(err){ current.id?revertUpdate(sheet,temp.id,old):revertCreate(sheet,temp.id); renderAll(); toast('Backend failed. Preview reverted: '+err.message,'error'); }finally{ hideSync(); } }
+async function deleteRecord(id){ if(!confirm('Delete this record? This will be logged.')) return; const sheet=current.sheet; const old=applyLocalDelete(sheet,id); renderAll(); showSync('Deleting in backend...'); try{ const res=await post({action:'deleteRecord',token:TOKEN,sheet,id}); if(res.status!=='success') throw new Error(res.message||'Delete failed'); toast('Record deleted.'); setTimeout(()=>reloadData(false),350); }catch(err){ revertDelete(sheet,old); renderAll(); toast('Delete failed. Record restored: '+err.message,'error'); }finally{ hideSync(); } }
+
+function exportCurrentCsv(){ if(!DB) return; const rows=document.getElementById('tableView').classList.contains('hidden')?dashboardExportRows():filteredRowsForTable(); const headers=document.getElementById('tableView').classList.contains('hidden')?Object.keys(rows[0]||{}):getCurrentHeaders().filter(h=>activeColumns[h]!==false); const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>`"${String(csvValue(h,r[h])).replace(/"/g,'""')}"`).join(','))).join('\n'); const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Lee_Business_${current.sheet||'dashboard'}_${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(a.href); }
+function dashboardExportRows(){ const s=getStats(); return [{metric:'Total Sales',value:s.totalSales},{metric:'Total Expenses',value:s.totalExpenses},{metric:'Net Income',value:s.income},{metric:'Margin %',value:s.margin.toFixed(2)},{metric:'Businesses',value:s.businesses.length},{metric:'Low Stock',value:s.low.length}]; }
+function csvValue(h,v){ if(h==='business_id') return businessName(v)+' '+shortId(v); if(h==='material_id') return materialName(v); if(h==='product_id') return productName(v); return v??''; }
+async function exportPdfReport(){ if(!DB) return; const { jsPDF } = window.jspdf; const doc=new jsPDF('p','mm','a4'); const s=getStats(); const margin=14; let y=14; doc.setFillColor(5,46,22); doc.rect(0,0,210,26,'F'); doc.setTextColor(255); doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.text('Lee Business Report',margin,16); doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.text(`Generated: ${new Date().toLocaleString()}`,margin,22); doc.text(`Filter: ${selectedBusiness()==='ALL'?'All Businesses':businessName(selectedBusiness())}`,196,16,{align:'right'}); y=36; doc.setTextColor(15,23,42); doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('Executive Summary',margin,y); y+=6;
+  doc.autoTable({startY:y,theme:'grid',head:[['Metric','Value']],body:[['Total Sales',money(s.totalSales)],['Expenses',money(s.totalExpenses)],['Net Income',money(s.income)],['Margin',s.margin.toFixed(1)+'%'],['Businesses',String(s.businesses.length)],['Low Stock',String(s.low.length)]],headStyles:{fillColor:[5,46,22]},styles:{fontSize:9}}); y=doc.lastAutoTable.finalY+10;
+  try{ const c1=document.getElementById('chartBusiness'); if(c1){ doc.addImage(c1.toDataURL('image/png'),'PNG',margin,y,182,70); y+=78; } }catch(e){}
+  if(y>210){doc.addPage();y=14;} doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('Recent Sales',margin,y); y+=4; const recent=[...s.sales].slice(-15).reverse().map(r=>[r.sale_date||'',businessName(r.business_id),r.item||'',money(num(r.total_price)||num(r.price)*num(r.qty||1))]); doc.autoTable({startY:y,head:[['Date','Business','Item','Total']],body:recent,headStyles:{fillColor:[22,163,74]},styles:{fontSize:8}});
+  doc.addPage(); y=14; doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('Low Stock Watchlist',margin,y); y+=4; const low=s.low.map(m=>[businessName(m.business_id),m.name||'',String(num(m.qty_on_hand)),String(num(m.reorder_level)),m.unit||'']); doc.autoTable({startY:y,head:[['Business','Material','Qty','Reorder','Unit']],body:low,headStyles:{fillColor:[245,158,11]},styles:{fontSize:8}});
+  doc.save(`Lee_Business_Report_${new Date().toISOString().slice(0,10)}.pdf`); }
+
 function html(s){ return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function esc(s){ return html(s); }
 function unescapeHtml(s){ const t=document.createElement('textarea'); t.innerHTML=s; return t.value; }
