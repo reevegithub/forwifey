@@ -291,7 +291,8 @@ const LS={KEY:'lee_business_connection_key',API:'lee_business_api_url',COLS:'lee
 let API_URL='',TOKEN='',USER=null,DB=emptyDb(),currentTab='dashboard',editingId=null,isSyncing=false,isMutating=false,lastActivityAt=Date.now(),pendingRemoteData=null,heartbeatTimer=null,idleSyncTimer=null,chatTimer=null,googleInitialized=false,pendingAfterLogin=null;
 let tablePage=1,tablePageSize=25,tableTotalPages=1,tableFilteredRows=[],lastChatSignature='',lastChatCount=0,audioReady=false,audioCtx=null;
 let chartBusiness=null,chartRoi=null,chartTrend=null,chartProfitByBusiness=null;
-const SYNC_RECORD_TABLES=['businesses','sales','expenses','materials','inventory','products','users'];
+
+const SYNC_RECORD_TABLES=['businesses','sales','expenses','materials','inventory','products'];
 
 const NAV=[
  ['dashboard','📊','Dashboard'],['businesses','🏢','Businesses'],['sales','💰','Sales'],['expenses','🧾','Expenses'],['materials','🧱','Materials'],['inventory','📦','Inventory'],['products','🛍️','Products'],['chat','💬','Team Chat'],['logs','🕘','Audit Logs']
@@ -310,26 +311,12 @@ const SCHEMAS={
 
 document.addEventListener('DOMContentLoaded',init);
 
-const LOADING_MESSAGES=[
- 'Preparing secure business workspace...',
- 'Optimizing workspace settings...',
- 'Just a moment...',
- 'Loading your business data...',
- 'Almost ready...',
- 'Finalizing setup...',
- 'Get ready to start!'
-];
-
-let loadingMessageIndex=0;
-let loadingMessageTimer=null;
-
 function init(){
- showInitialLoader(LOADING_MESSAGES[0]);
+ showInitialLoader('Loading Lee Business...');
  if(localStorage.getItem(LS.SIDEBAR)==='1')document.body.classList.add('sidebar-collapsed');
  bindActivity();renderNav();loadSavedConnection();
- setTimeout(()=>{showInitialLoader(LOADING_MESSAGES[1]);waitForGoogle(()=>{initGoogleAuth();setTimeout(()=>{if(!TOKEN){hideInitialLoader();document.getElementById('login').classList.remove('hidden')}},1500)})},300);
+ setTimeout(()=>{showInitialLoader('Checking Google Sign-In...');waitForGoogle(()=>{initGoogleAuth();setTimeout(()=>{if(!TOKEN){hideInitialLoader();document.getElementById('login').classList.remove('hidden')}},1500)})},300);
  startHeartbeat();startIdleSync();startChatPolling();
- loadingMessageTimer=setInterval(cycleLoadingMessage,4000);
 }
 function emptyDb(){return{businesses:[],sales:[],expenses:[],materials:[],inventory:[],products:[],logs:[],users:[],chat:[]}}
 function isAdmin(){return String(USER?.role||'').toLowerCase()==='admin'}
@@ -346,13 +333,10 @@ function refreshAdminUi(){
    const logs=nav.querySelector('[data-tab="logs"]');
    nav.insertBefore(btn,logs);
  }
- if(nav.querySelector('[data-tab="users"]') && !isAdmin()){
-   nav.querySelector('[data-tab="users"]').remove();
- }
+ if(nav.querySelector('[data-tab="users"]') && !isAdmin())nav.querySelector('[data-tab="users"]').remove();
 }
 function showInitialLoader(message='Preparing secure business workspace...'){const l=document.getElementById('initialLoader'),t=document.getElementById('initialLoaderText');if(t)t.textContent=message;if(l)l.classList.remove('hidden')}
-function hideInitialLoader(){if(loadingMessageTimer)clearInterval(loadingMessageTimer);document.getElementById('initialLoader')?.classList.add('hidden')}
-function cycleLoadingMessage(){if(document.getElementById('initialLoader')?.classList.contains('hidden'))return;loadingMessageIndex=(loadingMessageIndex+1)%LOADING_MESSAGES.length;showInitialLoader(LOADING_MESSAGES[loadingMessageIndex])}
+function hideInitialLoader(){document.getElementById('initialLoader')?.classList.add('hidden')}
 function bindActivity(){['click','keydown','mousemove','touchstart','input'].forEach(evt=>document.addEventListener(evt,()=>{lastActivityAt=Date.now();unlockAudio()}, {passive:true}))}
 function unlockAudio(){if(audioReady)return;try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();audioReady=true}catch(e){}}
 function notifySound(){if(!audioReady||!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=660;g.gain.value=.06;o.connect(g);g.connect(audioCtx.destination);o.start();setTimeout(()=>o.stop(),150)}catch(e){}}
@@ -389,19 +373,159 @@ async function reloadData(showOverlay=true){
  }catch(e){setStatus(false,true);toast(e.message,'error')}
  finally{isSyncing=false;if(showOverlay)loading(false);hideInitialLoader()}
 }
+
 async function sendHeartbeat(){if(!API_URL||!TOKEN||!USER||isSyncing||isMutating)return;try{const res=await apiPost({action:'heartbeat',token:TOKEN,user:USER});if(res.status==='success'){if(Array.isArray(res.users)){DB.users=res.users;renderOnlineUsers();renderChatOnlineUsers()}setStatus(true)}}catch(e){setStatus(false,true)}}
 function startHeartbeat(){heartbeatTimer=setInterval(sendHeartbeat,15000)}
-function startIdleSync(){idleSyncTimer=setInterval(async()=>{if(!API_URL||!TOKEN||!USER||isSyncing||isMutating)return;if(Date.now()-lastActivityAt<5000)return;try{const res=await apiPost({action:'getBootstrap',token:TOKEN,user:USER,light:true});if(res.status!=='success')return;const newDb=normalizeDb(res.data||{});if(hasRealRecordSetChanged(DB,newDb)){if(isAnyModalOpen())pendingRemoteData=newDb;else{DB=newDb;renderAll();toast('New business data synced from Google Sheets.','success');notifySound()}}else{DB.users=newDb.users||DB.users;DB.chat=newDb.chat||DB.chat;renderOnlineUsers();renderChatOnlineUsers()}setStatus(true)}catch(e){setStatus(false,true)}},3000)}
+
+function startIdleSync(){
+ idleSyncTimer=setInterval(async()=>{
+  if(!API_URL||!TOKEN||!USER||isSyncing||isMutating)return;
+  if(Date.now()-lastActivityAt<5000)return;
+
+  try{
+   const oldBusinessSignature=recordSetSignature(DB);
+
+   const res=await apiPost({
+    action:'getBootstrap',
+    token:TOKEN,
+    user:USER,
+    light:true
+   });
+
+   if(res.status!=='success')return;
+
+   const newDb=normalizeDb(res.data||{});
+   const newBusinessSignature=recordSetSignature(newDb);
+   const realBusinessChanged=oldBusinessSignature!==newBusinessSignature;
+
+   if(realBusinessChanged){
+    if(isAnyModalOpen()){
+     pendingRemoteData=newDb;
+    }else{
+     DB={
+      ...DB,
+      businesses:newDb.businesses,
+      sales:newDb.sales,
+      expenses:newDb.expenses,
+      materials:newDb.materials,
+      inventory:newDb.inventory,
+      products:newDb.products,
+      users:newDb.users||DB.users,
+      chat:newDb.chat||DB.chat,
+      logs:DB.logs
+     };
+
+     renderAll();
+     toast('New business record synced from Google Sheets.','success');
+     notifySound();
+    }
+   }else{
+    DB.users=newDb.users||DB.users;
+    DB.chat=newDb.chat||DB.chat;
+
+    renderOnlineUsers();
+    renderChatOnlineUsers();
+
+    if(currentTab==='chat')renderChat();
+   }
+
+   setStatus(true);
+  }catch(e){
+   setStatus(false,true);
+  }
+ },3000);
+}
+
 function startChatPolling(){chatTimer=setInterval(()=>reloadChat(false),5000)}
-async function reloadChat(manual=false){if(!API_URL||!TOKEN||!USER||isMutating)return;try{const res=await apiPost({action:'getChat',token:TOKEN,user:USER});if(res.status==='success'){const newChat=Array.isArray(res.chat)?res.chat:[];const sig=chatSignature(newChat);if(sig!==lastChatSignature){if(lastChatSignature&&newChat.length>lastChatCount){toast('New chat message.','success');notifySound()}DB.chat=newChat;lastChatSignature=sig;lastChatCount=newChat.length;renderChat()}if(manual)toast('Chat refreshed.','success')}}catch(e){if(manual)toast(e.message,'error')}}
+
+async function reloadChat(manual=false){
+ if(!API_URL||!TOKEN||!USER||isMutating)return;
+
+ try{
+  const oldSignature=lastChatSignature;
+  const oldCount=lastChatCount;
+
+  const res=await apiPost({
+   action:'getChat',
+   token:TOKEN,
+   user:USER
+  });
+
+  if(res.status==='success'){
+   const newChat=Array.isArray(res.chat)?res.chat:[];
+   const newSignature=chatSignature(newChat);
+   const newCount=newChat.length;
+
+   const hasNewChatMessage=
+    oldSignature &&
+    newSignature!==oldSignature &&
+    newCount>oldCount &&
+    hasNewMessageFromOthers(DB.chat,newChat);
+
+   DB.chat=newChat;
+   lastChatSignature=newSignature;
+   lastChatCount=newCount;
+
+   renderChat(currentTab==='chat');
+
+   if(hasNewChatMessage){
+    toast('New chat message.','success');
+    notifySound();
+   }
+
+   if(manual)toast('Chat refreshed.','success');
+  }
+ }catch(e){
+  if(manual)toast(e.message,'error');
+ }
+}
+
 function chatSignature(arr){return JSON.stringify((arr||[]).map(m=>m.id||m.timestamp||m.message).slice(-50))}
+function hasNewMessageFromOthers(oldChat,newChat){
+ const oldIds=new Set((oldChat||[]).map(m=>String(m.id||m.timestamp||m.message||'')));
+ const myEmail=String(USER?.email||'').toLowerCase();
+
+ return (newChat||[]).some(m=>{
+  const key=String(m.id||m.timestamp||m.message||'');
+  const sender=String(m.email||'').toLowerCase();
+  return key && !oldIds.has(key) && sender!==myEmail;
+ });
+}
+
 async function sendChat(e){e.preventDefault();if(!TOKEN)return requireGoogleTokenThen(()=>sendChat(e));const input=document.getElementById('chatInput');const message=input.value.trim();if(!message)return;input.value='';const temp={id:makeId(),timestamp:new Date().toISOString(),email:USER.email,name:USER.name,message};DB.chat.push(temp);renderChat(true);try{isMutating=true;const res=await apiPost({action:'sendChat',token:TOKEN,user:USER,message});if(res.status!=='success')throw new Error(res.message||'Message failed.');DB.chat=res.chat||DB.chat;lastChatSignature=chatSignature(DB.chat);lastChatCount=DB.chat.length;renderChat(true)}catch(err){DB.chat=DB.chat.filter(m=>m.id!==temp.id);renderChat();toast(err.message,'error')}finally{isMutating=false}}
 function renderChat(scrollBottom=false){const box=document.getElementById('chatBox');if(!box)return;box.innerHTML=(DB.chat||[]).map(m=>`<div class="chat-msg ${String(m.email).toLowerCase()===String(USER?.email).toLowerCase()?'me':''}"><div class="chat-meta">${esc(m.name||m.email||'User')} • ${esc(formatDateTime(m.timestamp))}</div><div class="chat-text">${esc(m.message||'')}</div></div>`).join('')||'<div style="color:#667085;font-weight:800">No messages yet.</div>';if(scrollBottom)box.scrollTop=box.scrollHeight;renderChatOnlineUsers()}
 function renderChatOnlineUsers(){const t=document.getElementById('chatOnlineUsers');if(!t)return;const users=(DB.users||[]).filter(u=>u.online||u.last_seen_at);t.innerHTML=users.map(u=>`<div style="display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:18px;padding:12px;background:#fff"><div class="avatar" style="width:38px;height:38px">${u.photo_url?`<img src="${escAttr(u.photo_url)}" style="display:block;width:100%;height:100%;object-fit:cover">`:`<span>${esc(initials(u.name||u.email))}</span>`}</div><div><div style="font-weight:900">${esc(u.name||u.email)}</div><div style="font-size:12px;color:#667085;font-weight:700">${esc(u.role||'user')}</div></div></div>`).join('')||'<div style="color:#667085;font-weight:800">No online users.</div>'}
 
 function normalizeDb(data){return{businesses:Array.isArray(data.businesses)?data.businesses:[],sales:Array.isArray(data.sales)?data.sales:[],expenses:Array.isArray(data.expenses)?data.expenses:[],materials:Array.isArray(data.materials)?data.materials:[],inventory:Array.isArray(data.inventory)?data.inventory:[],products:Array.isArray(data.products)?data.products:[],logs:Array.isArray(data.logs)?data.logs:[],users:Array.isArray(data.users)?data.users:[],chat:Array.isArray(data.chat)?data.chat:[]}}
-function hasRealRecordSetChanged(oldDb,newDb){const oldSig=recordSetSignature(oldDb),newSig=recordSetSignature(newDb);if(oldSig!==newSig){const oldRecords=JSON.parse(oldSig),newRecords=JSON.parse(newSig);for(const key in oldRecords){if(key!=='logs'&&key!=='users'&&key!=='chat'&&oldRecords[key].join(',')!==newRecords[key].join(','))return true}}return false}
-function recordSetSignature(db){const p={};SYNC_RECORD_TABLES.forEach(k=>p[k]=(Array.isArray(db?.[k])?db[k]:[]).map(r=>String(r.id||'').trim()).filter(Boolean).sort());return JSON.stringify(p)}
+
+function hasRealRecordSetChanged(oldDb,newDb){
+ return recordSetSignature(oldDb)!==recordSetSignature(newDb);
+}
+
+function recordSetSignature(db){
+ const payload={};
+
+ SYNC_RECORD_TABLES.forEach(key=>{
+  payload[key]=(Array.isArray(db?.[key])?db[key]:[])
+   .map(row=>{
+    const clean={...row};
+
+    delete clean.updated_at;
+    delete clean.updated_by;
+    delete clean.created_at;
+    delete clean.created_by;
+    delete clean.last_seen_at;
+    delete clean.last_login_at;
+    delete clean.profile_updated_at;
+
+    return JSON.stringify(clean);
+   })
+   .sort();
+ });
+
+ return JSON.stringify(payload);
+}
+
 function selectedBusinessGlobal(){return document.getElementById('businessFilter')?.value||'ALL'}
 function selectedBusinessTable(){return document.getElementById('tableBusinessFilter')?.value||selectedBusinessGlobal()}
 function rows(key,useTableFilter=false){const bid=useTableFilter?selectedBusinessTable():selectedBusinessGlobal(),arr=DB[key]||[];if(key==='users')return arr;if(bid==='ALL')return arr;return arr.filter(r=>r.business_id===bid||r.id===bid)}
@@ -414,6 +538,7 @@ function shortId(id){const s=String(id||'');return s.length<=4?s.toUpperCase():s
 
 function renderAll(){fillBusinessFilters();renderDashboard();if(currentTab!=='dashboard'&&currentTab!=='chat')renderCurrentTable();renderOnlineUsers();renderChatOnlineUsers()}
 function fillBusinessFilters(){const html='<option value="ALL">All Businesses</option>'+DB.businesses.map(b=>`<option value="${escAttr(b.id)}">${esc(b.name)}</option>`).join('');const a=document.getElementById('businessFilter'),b=document.getElementById('tableBusinessFilter');const oldA=a.value||'ALL',oldB=b.value||'ALL';a.innerHTML=html;b.innerHTML=html;a.value=[...a.options].some(o=>o.value===oldA)?oldA:'ALL';b.value=[...b.options].some(o=>o.value===oldB)?oldB:'ALL'}
+
 function renderDashboard(){
  const sales=rows('sales'),expenses=rows('expenses'),materials=rows('materials'),businesses=selectedBusinessGlobal()==='ALL'?DB.businesses:DB.businesses.filter(b=>b.id===selectedBusinessGlobal());
  const totalSales=sales.reduce((a,r)=>a+(num(r.total_price)||num(r.price)*num(r.qty||1)),0),totalExpenses=expenses.reduce((a,r)=>a+(num(r.total_cost)||num(r.price)*num(r.qty||1)),0),income=totalSales-totalExpenses,margin=totalSales?(income/totalSales)*100:0,lowStock=materials.filter(m=>num(m.qty_on_hand)<=num(m.reorder_level)).length;
@@ -442,7 +567,7 @@ function getVisiblePages(current,total){const pages=[];if(total<=7){for(let i=1;
 function goToPage(page){const n=Number(page);if(!Number.isFinite(n))return;tablePage=Math.min(Math.max(1,n),tableTotalPages);renderCurrentTable();document.getElementById('tableView')?.scrollIntoView({behavior:'smooth',block:'start'})}
 function changePageSize(size){const n=Number(size);if(!Number.isFinite(n)||n<=0)return;tablePageSize=n;tablePage=1;renderCurrentTable()}
 function getHeaders(key,data){if(data[0])return Object.keys(data[0]).filter(h=>!['_row','row'].includes(h));return{businesses:['id','name','description','status','created_at'],sales:['id','business_id','sale_date','item','product_id','price','qty','total_price','customer','payment_status','remarks'],expenses:['id','business_id','expense_date','item','type','vendor','price','qty','total_cost','remarks'],materials:['id','business_id','name','unit','qty_on_hand','cost_per_unit','reorder_level','status'],inventory:['id','business_id','material_id','type','qty','unit_cost','reference','remarks','movement_date'],products:['id','business_id','name','sku','selling_price','target_margin_percent','status'],users:['id','email','name','role','status','last_login_at','last_seen_at','photo_url'],logs:['timestamp','email','action','sheet','record_id','detail']}[key]||[]}
-function getVisibleHeaders(key,headers){let saved={};try{saved=JSON.parse(localStorage.getItem(LS.COLS)||'{}')||{}}catch(e){}const defaults={'users':['id','email','name','role','status','last_login_at','last_seen_at']};const defaultList=defaults[key]||[];return headers.filter(h=>{if(defaultList.length&&defaultList.includes(h))return true;if(defaultList.length&&!defaultList.includes(h))return false;if(saved[key]&&typeof saved[key][h]==='boolean')return saved[key][h];return !['token','row_index'].includes(h)})}
+function getVisibleHeaders(key,headers){let saved={};try{saved=JSON.parse(localStorage.getItem(LS.COLS)||'{}')||{}}catch(e){}return headers.filter(h=>{if(saved[key]&&typeof saved[key][h]==='boolean')return saved[key][h];return !['token','row_index'].includes(h)})}
 function renderColumnPanel(key,headers){document.getElementById('columnPanel').innerHTML=headers.map(h=>`<label style="display:inline-flex;align-items:center;gap:8px;margin:0 18px 10px 0;font-size:13px;font-weight:800"><input type="checkbox" ${getVisibleHeaders(key,headers).includes(h)?'checked':''} onchange="setColumnVisible('${key}','${h}',this.checked)"> ${esc(headerLabel(h))}</label>`).join('')}
 function setColumnVisible(key,h,visible){let saved={};try{saved=JSON.parse(localStorage.getItem(LS.COLS)||'{}')||{}}catch(e){}saved[key]=saved[key]||{};saved[key][h]=visible;localStorage.setItem(LS.COLS,JSON.stringify(saved));renderCurrentTable()}
 function toggleColumns(){document.getElementById('columnPanel').classList.toggle('hidden')}
@@ -468,10 +593,34 @@ function exportCsv(){const schema=currentTab==='dashboard'?SCHEMAS.sales:SCHEMAS
 function exportPdf(){const schema=currentTab==='dashboard'?SCHEMAS.sales:SCHEMAS[currentTab],data=currentTab==='dashboard'?rows('sales'):tableFilteredRows.length?tableFilteredRows:(currentTab==='logs'?DB.logs:rows(schema.key,true));if(!data.length)return toast('No data to export.','error');const{jsPDF}=window.jspdf,doc=new jsPDF('l','mm','a4'),headers=Object.keys(data[0]).slice(0,10);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text(`Lee Business - ${schema.title}`,14,16);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(`Generated: ${new Date().toLocaleString()}`,14,22);doc.autoTable({startY:28,head:[headers.map(headerLabel)],body:data.map(r=>headers.map(h=>String(h==='business_id'?businessName(r[h]):(r[h]??'')))),theme:'grid',headStyles:{fillColor:[15,23,42]},styles:{fontSize:8}});doc.save(`lee_business_${schema.key}.pdf`)}
 function csvEscape(v){return`"${String(v??'').replace(/"/g,'""')}"`}
 function downloadBlob(blob,filename){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+
 function openModal(id){document.getElementById(id).classList.add('show')}
 function closeModal(id){document.getElementById(id).classList.remove('show');applyPendingRemoteData()}
 function isAnyModalOpen(){return[...document.querySelectorAll('.modal')].some(m=>m.classList.contains('show'))}
-function applyPendingRemoteData(){if(!pendingRemoteData)return;DB=pendingRemoteData;pendingRemoteData=null;renderAll();toast('Pending Google Sheets updates applied.','success')}
+
+function applyPendingRemoteData(){
+ if(!pendingRemoteData)return;
+
+ const newDb=pendingRemoteData;
+ pendingRemoteData=null;
+
+ DB={
+  ...DB,
+  businesses:newDb.businesses||DB.businesses,
+  sales:newDb.sales||DB.sales,
+  expenses:newDb.expenses||DB.expenses,
+  materials:newDb.materials||DB.materials,
+  inventory:newDb.inventory||DB.inventory,
+  products:newDb.products||DB.products,
+  users:newDb.users||DB.users,
+  chat:newDb.chat||DB.chat,
+  logs:DB.logs
+ };
+
+ renderAll();
+ toast('Pending business update applied.','success');
+}
+
 function loading(show,text='Loading...'){document.getElementById('loadingText').textContent=text;document.getElementById('loading').classList.toggle('show',!!show)}
 function toast(message,type=''){const wrap=document.getElementById('toastWrap'),el=document.createElement('div');el.className=`toast ${type}`;el.textContent=message;wrap.appendChild(el);setTimeout(()=>el.remove(),4200)}
 function setStatus(online,isError=false){const pill=document.getElementById('statusPill'),text=document.getElementById('statusText');pill.classList.toggle('online',!!online);pill.classList.toggle('error',!!isError);text.textContent=online?'Online':(isError?'Error':'Offline')}
